@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.clickhouse.mappers.AppointmentLetterMapper">
+
+    <select id="findDetailAppointmentLetter" resultType="com.example.clickhouse.dtos.reponses.DetailAppointmentLetter">
+        SELECT
+            aa.soGiayHenKl as so_giay_hen_kl,
+            aa.maCskcb as ma_cskcb,
+            aa.hoTen as ho_ten,
+            aa.ngaySinh as ngay_sinh,
+            aa.gioiTinh as gioi_tinh,
+            aa.diaChi as dia_chi,
+            aa.maBenhYhct as ma_the_bhyt,
+            aa.gtTheDen as gt_the_den,
+            aa.ngayVao as ngay_vao,
+            aa.ngayVaoNoiTru as ngay_vao_noi_tru,
+            aa.ngayRa as ngay_ra,
+            aa.ngayHenKl as ngay_hen_kl,
+            aa.chanDoanRv as chan_doan_rv,
+            aa.maBenhChinh as benh_chinh,
+            aa.maBenhKt as benh_kt,
+            aa.maBenhYhct as benh_yhct,
+            aa.maDoiTuongKcb as doituong_kcb,
+            aa.maBacSi as bac_si,
+            aa.maTtdv as ttdv,
+            aa.ngayCt as ngay_ct ,
+            aa.duPhong as du_phong
+        FROM
+            iceberg.admision_appointment as aa
+        inner join
+            iceberg.admision_checkin as ac on aa.admision_checkin_uuid = ac.id
+        inner join
+            iceberg.patient as p on ac.patient_id = p.uuid
+        WHERE
+            ac.maLk = #{maLk}
+        AND
+            aa.soGiayHenKl = #{soGiayHen}
+        AND
+            p.soCccd = #{soCccd}
+    </select>
+
+    <select id="findTransferPaperDatas" resultType="com.example.clickhouse.dtos.reponses.TransferPaperData">
+        <!-- This select statement is intentionally left empty for future use -->
+        <!-- You can define your SQL query here as needed -->
+        <!-- Example: -->
+        <!-- SELECT * FROM some_table WHERE condition = #{parameter} -->
+        SELECT
+            ac.maLk as ma_lk,
+            ar.soHoso as so_hoso,
+            ar.soChuyentuyen as so_chuyentuyen,
+            ar.giayChuyenTuyen as giay_chuyen_tuyen,
+            ar.maCskcb as cskcb,
+            ar.maNoiDi as noi_di,
+            ar.maNoiDen as noi_den,
+            ar.hoTen as ho_ten,
+            ar.ngaySinh as ngay_sinh,
+            ar.gioiTinh as gioi_tinh,
+            ar.maQuoctich as quoctich,
+            ar.maQuoctich as dantoc,
+            ar.maNgheNghiep as nghe_nghiep,
+            ar.diaChi as dia_chi,
+            ar.maTheBhyt as ma_the_bhyt,
+            ar.gtTheDen as gt_the_den,
+            ar.ngayVao as ngay_vao,
+            ar.ngayVaoNoiTru as ngay_vao_noi_tru,
+            ar.ngayRa as ngay_ra,
+            ar.dauHieuLs as dau_hieu_ls,
+            ar.chanDoanRv as chan_doan_rv,
+            ar.qtBenhly as qt_benhly,
+            ar.tomtatKq as tomtat_kq,
+            ar.ppDieuTri as pp_dieutri,
+            ar.maBenhChinh as benh_chinh,
+            ar.maBenhKt as benh_kt,
+            ar.maBenhYhct as benh_yhct,
+            ar.maLoaiRv as loai_rv,
+            ar.maLydoCt as ma_lydo_ct,
+            ar.huongDieuTri as huong_dieu_tri,
+            ar.phuongtienVc as phuongtien_vc,
+            ar.hotenNguoiHt as hoten_nguoi_ht,
+            ar.chucdanhNguoiHt as chucdanh_nguoi_ht,
+            ar.maBacSi as bac_si,
+            ar.maTtdv as ttdv,
+            ar.duPhong as du_phong
+        FROM
+            iceberg.admision_referral as ar
+        inner join
+            iceberg.admision_checkin as ac on ar.admision_checkin_uuid = ac.id
+        inner join
+            iceberg.admision_medical_record as amr on amr.admision_checkin_uuid = ac.id
+        inner join
+            iceberg.patient as p on ac.patient_id = p.uuid
+        WHERE
+            amr.namQt = #{namQt}
+        AND
+            p.soCccd = #{soCccd}
+
+    </select>
+
+</mapper>

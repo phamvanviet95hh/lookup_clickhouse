@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.clickhouse.mappers.PatientMapper">
+
+    <select id="getAllPatients" resultType="com.example.clickhouse.models.Patients">
+        SELECT
+            uuid,
+            diaChi AS diaChi,
+            dienThoai AS dienThoai,
+            gioiTinh AS gioiTinh,
+            hoTen AS hoTen,
+            hoTenCha AS hoTenCha,
+            hoTenMe AS hoTenMe,
+            maDanToc AS maDanToc,
+            maNgheNghiep AS maNgheNghiep,
+            maQuocTich AS maQuocTich,
+            maHuyenCuTru AS maHuyenCuTru,
+            maTinhCuTru AS maTinhCuTru,
+            maXaCuTru AS maXaCuTru,
+            ngaySinh AS ngaySinh,
+            nhomMau AS nhomMau,
+            soCccd AS soCccd,
+            stt
+        FROM iceberg.patient as p
+    </select>
+
+    <select id="getPatientById" resultType="com.example.clickhouse.models.Patient">
+        SELECT
+            uuid,
+            diaChi AS diaChi,
+            dienThoai AS dienThoai,
+            gioiTinh AS gioiTinh,
+            hoTen AS hoTen,
+            hoTenCha AS hoTenCha,
+            hoTenMe AS hoTenMe,
+            maDanToc AS maDanToc,
+            maNgheNghiep AS maNgheNghiep,
+            maQuocTich AS maQuocTich,
+            maHuyenCuTru AS maHuyenCuTru,
+            maTinhCuTru AS maTinhCuTru,
+            maXaCuTru AS maXaCuTru,
+            ngaySinh AS ngaySinh,
+            nhomMau AS nhomMau,
+            soCccd AS soCccd,
+            stt AS stt,
+            ac.maLk AS maLk
+        FROM iceberg.patient as p
+        inner join iceberg.admision_checkin as ac on p.uuid = ac.patient_id
+        where uuid = #{uuid}
+    </select>
+</mapper>
