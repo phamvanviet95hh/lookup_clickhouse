@@ -52,5 +52,4 @@ public interface AdmissionMedicalRecordMapper {
 
     long countAppointmentLetter(String namQt, String soCCCD, String maCskcb, String ngayHenTu, String ngayHenDen, String chanDoan);
 
-
 }

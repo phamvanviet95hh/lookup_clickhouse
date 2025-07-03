@@ -61,4 +61,16 @@ public class HeathControllers {
         return heathBussiness.giaychuyentuyen(rq);
     }
 
+    @PreAuthorize("hasAnyAuthority('ROLE_admin')")
+    @PostMapping(value = "/giaychuyentuyen/danhsach")
+    public ResponseEntity<?> giaychuyentuyenDs(@RequestBody TransferPaperListRq rq) throws Exception {
+        return heathBussiness.giaychuyentuyenDs(rq);
+    }
+
+    @PreAuthorize("hasAnyAuthority('ROLE_admin')")
+    @PostMapping(value = "/giaychuyentuyen/chitiet")
+    public ResponseEntity<?> giaychuyentuyenDetail(@RequestBody TransferPaperDetailRq rq) throws Exception {
+        return heathBussiness.giaychuyentuyenDetail(rq);
+    }
+
 }

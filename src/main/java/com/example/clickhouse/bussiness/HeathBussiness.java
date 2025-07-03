@@ -1001,4 +1001,233 @@ public class HeathBussiness {
         return ResponseEntity.ok(transferPaperDatasBaseReposeLookup);
 
     }
+
+    public ResponseEntity<?> giaychuyentuyenDs(TransferPaperListRq rq) {
+
+        String namQt = rq.getNamQt().trim();
+        String soCccd = rq.getSoCCCD().trim();
+        String cskcbFilter = rq.getFilters().getCskcb().trim().isEmpty() ? null : rq.getFilters().getCskcb().trim();
+        String noiDiFilter = rq.getFilters().getNoi_di().trim().isEmpty() ? null : rq.getFilters().getNoi_di().trim();
+        String noiDenFilter = rq.getFilters().getNoi_den().trim().isEmpty() ? null : rq.getFilters().getNoi_den().trim();
+        String ngayVaoTu = rq.getFilters().getNgay_vao_tu().isEmpty() ? null : rq.getFilters().getNgay_vao_tu();
+        String ngayVaoDen = rq.getFilters().getNgay_vao_den().isEmpty() ? null : rq.getFilters().getNgay_vao_den();
+        String sortBy = rq.getSort().getSortBy().trim().isEmpty() ? "id" : rq.getSort().getSortBy().trim();
+        String sortOrder = rq.getSort().getSortOrder().trim().isEmpty() ? "asc" : rq.getSort().getSortOrder().trim();
+        Integer page = rq.getPagination().getPage() == null ? 0 : rq.getPagination().getPage();
+        Integer pageSize = rq.getPagination().getPageSize() == null ? 10 : rq.getPagination().getPageSize();
+
+        NoiDi noiDi = null;
+        NoiDen noiDen = null;
+
+        List<TransferPaperListDatas> transferPaperListDatas = new ArrayList<>();
+        List<TransferPaperListData> transferPaperListData = null;
+        PaginationRp paginationRp = null;
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by( Sort.Direction.fromString(sortOrder) ,sortBy));
+        int offset = pageable.getPageNumber() * pageable.getPageSize();
+        if (Objects.equals(namQt, "") || Objects.equals(soCccd, "")) {
+            BaseResponseFail baseResponseFail = BaseResponseFail.builder()
+                    .statusCode(0)
+                    .errorDetail("Không được để trống năm Qt và Số CCCD")
+                    .build();
+
+            return ResponseEntity.ok(baseResponseFail);
+        }else {
+            transferPaperListData = appointmentLetterMapper.findTransferPaperListDatas(namQt, soCccd, cskcbFilter, noiDiFilter, noiDenFilter, ngayVaoTu, ngayVaoDen, pageable.getPageSize(), offset);
+            long total = appointmentLetterMapper.countTransferPaperListData(
+                    namQt, soCccd, cskcbFilter, noiDiFilter, noiDenFilter, ngayVaoTu, ngayVaoDen);
+            Page<TransferPaperListData> paperListData = new PageImpl<>(transferPaperListData, pageable, total);
+            paginationRp = PaginationRp.builder()
+                    .page(paperListData.getNumber())
+                    .pageSize(paperListData.getSize())
+                    .totalPages(paperListData.getTotalPages())
+                    .totalItems((int) paperListData.getTotalElements())
+                    .build();
+            if (!transferPaperListData.isEmpty()){
+                for (TransferPaperListData listData : transferPaperListData){
+                    Cskcb cskcb = Cskcb.builder()
+                            .ma(listData.getMa_cskcb())
+                            .ten(listData.getMa_cskcb() == null ? null : "test")
+                            .build();
+//                    String tennoiDi = listData.getMaNoiDi() == null ? null : admissionMedicalRecordRepository.getNoiDiFacility(listData.getMaNoiDi());
+//                    String tennoiDen = listData.getMaNoiDen() == null ? null : admissionMedicalRecordRepository.getNoiDenFacility(listData.getMaNoiDen());
+
+                    noiDi =  NoiDi.builder()
+                            .ma(listData.getMaNoiDi())
+                            .ten("test")
+                            .build();
+
+                    noiDen =  NoiDen.builder()
+                            .ma(listData.getMaNoiDen())
+                            .ten("test")
+                            .build();
+
+                    TransferPaperListDatas transferPaperListDatas1 = TransferPaperListDatas.builder()
+                            .ma_lk(listData.getMa_lk())
+                            .so_hoso(listData.getSo_hoso())
+                            .so_chuyentuyen(listData.getSo_chuyentuyen())
+                            .ho_ten(listData.getHo_ten())
+                            .cskcb(cskcb)
+                            .noi_di(noiDi)
+                            .noi_den(noiDen)
+                            .ngay_vao(listData.getNgay_vao())
+                            .ngay_ra(listData.getNgay_ra()).build();
+                    transferPaperListDatas.add(transferPaperListDatas1);
+                }
+            }else {
+                BaseResponseFail baseResponseFail = BaseResponseFail.builder()
+                        .statusCode(0)
+                        .errorDetail("Không tìm thấy bản ghi phù hợp, vui lòng kiểm tra lại số CCCD và năm Qt")
+                        .build();
+
+                return ResponseEntity.ok(baseResponseFail);
+            }
+        }
+
+
+
+        ResponseListSoSucKhoe<TransferPaperListDatas> transferPaperListDatasResponseListSoSucKhoe = ResponseListSoSucKhoe.<TransferPaperListDatas>builder()
+                .statusCode(1)
+                .pagination(paginationRp)
+                .data(transferPaperListDatas)
+                .build();
+
+        return ResponseEntity.ok(transferPaperListDatasResponseListSoSucKhoe);
+
+    }
+
+    public ResponseEntity<?> giaychuyentuyenDetail(TransferPaperDetailRq rq) {
+
+        String soHoSo = rq.getSo_hoso().trim();
+        String soCccd = rq.getSoCCCD().trim();
+        String maLk = rq.getMa_lk().trim();
+        String soGiayChuyenTuyen = rq.getSo_chuyentuyen().trim();
+
+        TransferPaperDetailDatas transferPaperDetailDatas = null;
+        TransferPaperDetailData transferPaperDetailData = null;
+        NoiDi noiDi = null;
+        NoiDen noiDen = null;
+        if( Objects.equals(soHoSo, "") || Objects.equals(soCccd, "") || Objects.equals(maLk, "") || Objects.equals(soGiayChuyenTuyen, "")) {
+            BaseResponseFail baseResponseFail = BaseResponseFail.builder()
+                    .statusCode(0)
+                    .errorDetail("Không được để trống giá trị Số hồ sơ, Số CCCD, Mã LK và Số giấy chuyển tuyến")
+                    .build();
+            return ResponseEntity.ok(baseResponseFail);
+        }else {
+            transferPaperDetailData = appointmentLetterMapper.findTransferPaperDetailData(soHoSo, soCccd, maLk, soGiayChuyenTuyen);
+
+            if (transferPaperDetailData == null) {
+                BaseResponseFail baseResponseFail = BaseResponseFail.builder()
+                        .statusCode(0)
+                        .errorDetail("Không tìm thấy bản ghi phù hợp, vui lòng kiểm tra lại Số hồ sơ, Số CCCD, Mã LK và Số giấy chuyển tuyến")
+                        .build();
+                return ResponseEntity.ok(baseResponseFail);
+            }else {
+                Cskcb cskcb = Cskcb.builder()
+                        .ma(transferPaperDetailData.getMa_cskcb())
+                        .ten(transferPaperDetailData.getMa_cskcb() == null ? null : "test")
+                        .build();
+//                String tennoiDi = transferPaperDetailData.getNoi_di() == null ? null : admissionMedicalRecordRepository.getNoiDiFacility(transferPaperDetailData.getNoi_di());
+//                String tennoiDen = transferPaperDetailData.getNoi_den() == null ? null : admissionMedicalRecordRepository.getNoiDenFacility(transferPaperDetailData.getNoi_den());
+
+                noiDi = NoiDi.builder()
+                        .ma(transferPaperDetailData.getNoi_di())
+                        .ten("tennoiDi")
+                        .build();
+
+                noiDen = NoiDen.builder()
+                        .ma(transferPaperDetailData.getNoi_den())
+                        .ten("tennoiDen")
+                        .build();
+
+                QuocTich quocTich = QuocTich.builder()
+                        .ma(transferPaperDetailData.getQuoctich())
+                        .ten(null)
+                        .build();
+
+                DanToc danToc = DanToc.builder()
+                        .ma(transferPaperDetailData.getDantoc())
+                        .ten(null)
+                        .build();
+
+                NgheNghiep ngheNghiep = NgheNghiep.builder()
+                        .ma(transferPaperDetailData.getNghe_nghiep())
+                        .ten(null)
+                        .build();
+
+                BenhChinh benhChinh = BenhChinh.builder()
+                        .ma(transferPaperDetailData.getBenh_chinh())
+                        .ten(null)
+                        .build();
+
+                BenhKt benhKt = BenhKt.builder()
+                        .ma(transferPaperDetailData.getBenh_kt())
+                        .ten(null)
+                        .build();
+
+                BenhYhct benhYhct = BenhYhct.builder()
+                        .ma(transferPaperDetailData.getBenh_yhct())
+                        .ten(null)
+                        .build();
+
+                LoaiRv loaiRv = LoaiRv.builder()
+                        .ma(transferPaperDetailData.getLoai_rv())
+                        .ten(null)
+                        .build();
+
+                BacSi bacSi = BacSi.builder()
+                        .ma(transferPaperDetailData.getBac_si())
+                        .ten(null)
+                        .build();
+
+                TTDV ttdv = TTDV.builder()
+                        .ma(transferPaperDetailData.getTtdv())
+                        .ten(null)
+                        .build();
+
+                transferPaperDetailDatas = TransferPaperDetailDatas.builder()
+                        .giay_chuyen_tuyen(transferPaperDetailData.getGiay_chuyen_tuyen())
+                        .cskcb(cskcb)
+                        .noi_di(noiDi)
+                        .noi_den(noiDen)
+                        .ho_ten(transferPaperDetailData.getHo_ten())
+                        .ngay_sinh(transferPaperDetailData.getNgay_sinh())
+                        .gioi_tinh(transferPaperDetailData.getGioi_tinh())
+                        .quoctich(quocTich)
+                        .dantoc(danToc)
+                        .nghe_nghiep(ngheNghiep)
+                        .dia_chi(transferPaperDetailData.getDia_chi())
+                        .ma_the_bhyt(transferPaperDetailData.getMa_the_bhyt())
+                        .gt_the_den(transferPaperDetailData.getGt_the_den())
+                        .ngay_vao(transferPaperDetailData.getNgay_vao())
+                        .ngay_vao_noi_tru(transferPaperDetailData.getNgay_vao_noi_tru())
+                        .ngay_ra(transferPaperDetailData.getNgay_ra())
+                        .dau_hieu_ls(transferPaperDetailData.getDau_hieu_ls())
+                        .chan_doan_rv(transferPaperDetailData.getChan_doan_rv())
+                        .qt_benhly(transferPaperDetailData.getQt_benhly())
+                        .tomtat_kq(transferPaperDetailData.getTomtat_kq())
+                        .pp_dieutri(transferPaperDetailData.getPp_dieutri())
+                        .benh_chinh(benhChinh)
+                        .benh_kt(benhKt)
+                        .benh_yhct(benhYhct)
+                        .loai_rv(loaiRv)
+                        .ma_lydo_ct(transferPaperDetailData.getMa_lydo_ct())
+                        .huong_dieu_tri(transferPaperDetailData.getHuong_dieu_tri())
+                        .phuongtien_vc(transferPaperDetailData.getPhuongtien_vc())
+                        .hoten_nguoi_ht(transferPaperDetailData.getHoten_nguoi_ht())
+                        .chucdanh_nguoi_ht(transferPaperDetailData.getChucdanh_nguoi_ht())
+                        .bac_si(bacSi)
+                        .ttdv(ttdv)
+                        .du_phong(transferPaperDetailData.getDu_phong())
+                        .build();
+            }
+
+        }
+
+        BaseResponseNoList<TransferPaperDetailDatas> baseResponseNoList = BaseResponseNoList.<TransferPaperDetailDatas>builder()
+                .statusCode(1)
+                .data(transferPaperDetailDatas)
+                .build();
+        return ResponseEntity.ok(baseResponseNoList);
+
+    }
 }
