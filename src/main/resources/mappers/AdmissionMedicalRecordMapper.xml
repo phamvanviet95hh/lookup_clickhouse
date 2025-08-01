@@ -131,6 +131,9 @@
         <if test="chanDoan != null and chanDoan != ''">
             AND amr.chanDoanRv = #{chanDoan}
         </if>
+        <if test="sortBy != null and sortBy != ''">
+            ORDER BY ${sortBy} <if test="sortOrder != null and sortOrder != ''"> ${sortOrder} </if>
+        </if>
          LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
@@ -314,6 +317,9 @@
         <if test="ngayHenDen != null and ngayHenDen != ''">
             AND aa.ngayHenKl &lt;= #{ngayHenDen}
         </if>
+        <if test="sortBy != null and sortBy != ''">
+            ORDER BY ${sortBy} <if test="sortOrder != null and sortOrder != ''"> ${sortOrder} </if>
+        </if>
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
@@ -337,6 +343,36 @@
         <if test="ngayHenDen != null and ngayHenDen != ''">
             AND aa.ngayHenKl &lt;= #{ngayHenDen}
         </if>
+    </select>
+
+
+    <select id="getCskcbFacility" resultType="com.example.clickhouse.dtos.datas.Cskcb">
+
+            SELECT
+                f.ma_cskb AS ma,
+                f.ten_cskb AS ten
+            FROM
+                iceberg.facility f
+            WHERE
+                f.ma_cskb = #{maCskcb}
+    </select>
+
+    <select id="getNoiDi" resultType="String">
+        SELECT
+            f.ten_cskb
+        FROM
+            iceberg.facility f
+        WHERE
+            f.ma_cskb = #{noiDi}
+    </select>
+
+    <select id="getNoiDen" resultType="String">
+        SELECT
+            f.ten_cskb
+        FROM
+            iceberg.facility f
+        WHERE
+            f.ma_cskb = #{cskb}
     </select>
 
 </mapper>

@@ -13,6 +13,8 @@ public class Constants {
         public static final String HOSPITAL = "/benhvien";
         public static final String Health = "/health";
 
+        public static final String LOOKUP = "/tracuu";
+
     }
 
 }

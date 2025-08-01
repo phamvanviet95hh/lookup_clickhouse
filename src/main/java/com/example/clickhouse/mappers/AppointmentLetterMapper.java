@@ -14,7 +14,9 @@ public interface AppointmentLetterMapper {
 
     List<TransferPaperData> findTransferPaperDatas(String namQt, String soCccd);
 
-    List<TransferPaperListData> findTransferPaperListDatas(String namQt, String soCccd, String cskcbFilter, String noiDiFilter, String noiDenFilter, String ngayVaoTu, String ngayVaoDen, int pageSize, int offset);
+    List<TransferPaperListData> findTransferPaperListDatas(String namQt, String soCccd, String cskcbFilter, String noiDiFilter,
+                                                           String noiDenFilter, String ngayVaoTu, String ngayVaoDen,
+                                                           int pageSize, int offset, String sortBy, String sortOrder);
 
     long countTransferPaperListData(String namQt, String soCccd, String cskcbFilter, String noiDiFilter, String noiDenFilter, String ngayVaoTu, String ngayVaoDen);
 

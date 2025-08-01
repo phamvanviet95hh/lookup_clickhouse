@@ -32,7 +32,8 @@ public interface AdmissionMedicalRecordMapper {
     String getNoiDi(String noiDi);
 
 
-    List<SoKhamChuaBenhListData> findGetListSoSucKhoeDienTu(String namQt, String soCCCD, String maCskcb, String chanDoan, int pageSize, int offset);
+    List<SoKhamChuaBenhListData> findGetListSoSucKhoeDienTu(String namQt, String soCCCD, String maCskcb, String chanDoan,
+                                                            int pageSize, int offset, String sortBy, String sortOrder);
 
     long countSoKhamChuaBenh(String namQt, String soCCCD, String maCskcb, String chanDoan);
 
@@ -48,8 +49,10 @@ public interface AdmissionMedicalRecordMapper {
 
     List<AppointmentLetterData> findAppointmentLetterCustorm(String namQt, String soCCCD);
 
-    List<AppointmentLetterDataDs> findAppointmentLetterListCustorm(String namQt, String soCCCD, String maCskcb, String ngayHenTu, String ngayHenDen, String chanDoan, int pageSize, int offset);
+    List<AppointmentLetterDataDs> findAppointmentLetterListCustorm(String namQt, String soCCCD, String maCskcb, String ngayHenTu,
+                                                                   String ngayHenDen, String chanDoan, int pageSize, int offset,String sortBy, String sortOrder);
 
     long countAppointmentLetter(String namQt, String soCCCD, String maCskcb, String ngayHenTu, String ngayHenDen, String chanDoan);
 
+    Cskcb getCskcbFacility(String maCskcb);
 }
