@@ -11,4 +11,16 @@
         WHERE pf.unit_name = #{unitName} AND pf.ma_lk = #{maLk}
     </select>
 
+
+    <select id="findByUnitNameAndFileName" resultType="com.example.clickhouse.dtos.datas.ProcessedFiles">
+
+        SELECT
+            pf.file_name as fileName,
+            pf.directory as directory
+            FROM iceberg.processed_files as pf
+        WHERE
+            pf.unit_name = #{maCSKCB} AND pf.file_name LIKE CONCAT('%', #{maTraCuu}, '%')
+
+    </select>
+
 </mapper>

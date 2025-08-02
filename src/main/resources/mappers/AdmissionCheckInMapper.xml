@@ -175,4 +175,20 @@
             amr.soCccdNnd = #{soCccdNnd}
     </select>
 
+
+    <select id="findByCreatedAt" resultType="com.example.clickhouse.dtos.datas.DataHistoryDto">
+        SELECT
+            f.ma_cskb    AS maCSKCB,
+            f.ten_cskb  AS tenCSKCB,
+            ac.maLk     AS maLK,
+            ac.ngayRa   AS ngayRaVien
+        FROM
+            iceberg.admision_checkin ac
+                JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
+                JOIN iceberg.patient p ON ac.patient_id = p.uuid
+        WHERE
+            f.ma_cskb = #{maCSKCB}
+          AND p.soCccd = #{soCCCD}
+    </select>
+
 </mapper>

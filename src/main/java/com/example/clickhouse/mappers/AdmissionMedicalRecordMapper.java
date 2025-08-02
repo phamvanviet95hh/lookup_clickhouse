@@ -55,4 +55,11 @@ public interface AdmissionMedicalRecordMapper {
     long countAppointmentLetter(String namQt, String soCCCD, String maCskcb, String ngayHenTu, String ngayHenDen, String chanDoan);
 
     Cskcb getCskcbFacility(String maCskcb);
+
+    List<InfoPatient> findDataPatientsCustorm(String maCSKCB, String soCCCD);
+
+
+    List<PrehistoricDtos> findDataPatientsCustormPrehistoric(String maCSKCB, Long checkInId);
+
+    List<ExaminationDto> findByDoKhamCustorm(String maCSKCB, Long checkInId);
 }

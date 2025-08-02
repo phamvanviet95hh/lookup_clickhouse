@@ -9,6 +9,7 @@ import com.example.clickhouse.dtos.reponses.ElectronicHumanHospitalResponse;
 import com.example.clickhouse.dtos.requests.DataNhiRq;
 import com.example.clickhouse.dtos.requests.ElectronicHumanHospitalRq;
 import com.example.clickhouse.dtos.requests.ElectronicHumanMaTraCuuRq;
+import com.example.clickhouse.dtos.requests.LookupHistoryKcbRq;
 import com.example.clickhouse.entitys.auth.MedicalXml;
 import com.example.clickhouse.mappers.*;
 import com.example.clickhouse.models.DataNhi;
@@ -22,10 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class LookUpBusiness {
@@ -50,6 +48,9 @@ public class LookUpBusiness {
 
     @Autowired
     private AdmissionMedicalRecordMapper admissionMedicalRecordMapper;
+
+    @Autowired
+    private AdmisionMedMapper admisionMedMapper;
 
 
     @Autowired
@@ -325,6 +326,198 @@ public class LookUpBusiness {
         return ResponseEntity.ok(baseReposeLookup);
     }
 
-//    public ResponseEntity<?> benhandientuID(Jwt jwt, ElectronicHumanMaTraCuuRq rq) {
-//    }
+    public ResponseEntity<?> benhandientuID(Jwt jwt, ElectronicHumanMaTraCuuRq rq) throws Exception {
+
+        Map<String, Object> claims = jwt.getClaims();
+        ResponseEntity<?> permissionCheck = checkAccessPermissionByMalk(rq.getMaTraCuu(), claims);
+        if (permissionCheck != null) return permissionCheck;
+
+        if (rq == null){
+            return ResponseEntity.badRequest().body(this.reponseError("Không tìm thấy request gửi lên...", null));
+        }
+        Optional<ProcessedFiles> processedFiles = processFileMapper.findByUnitNameAndFileName(rq.getMaCSKCB(), rq.getMaTraCuu());
+        if (processedFiles.isEmpty()) {
+            return ResponseEntity.badRequest().body(this.reponseError("Không tìm thấy hồ sơ trong kho...", null));
+        }
+        String data = minioService.getFileAsBase64(processedFiles.get().getDirectory());
+        ElectronicHumanHospitalResponse electronicHumanHospitalResponse = ElectronicHumanHospitalResponse.builder()
+                .statusCode(1)
+                .fileHoSo(data)
+                .build();
+        return ResponseEntity.ok(electronicHumanHospitalResponse);
+    }
+
+    public ResponseEntity<?> lichsukcb(Jwt jwt, LookupHistoryKcbRq rq) {
+        Map<String, Object> claims = jwt.getClaims();
+        ResponseEntity<?> permissionCheck = checkAccessPermissionByCccd(claims, rq.getSoCCCD());
+        if (permissionCheck != null) return permissionCheck;
+
+        if (rq.getMaCSKCB() == null || rq.getMaCSKCB().isEmpty()){
+            return ResponseEntity.badRequest().body(this.reponseError("Không để trống MaCSKCB", "123645987"));
+        }
+        if (rq.getRequest_id() == null || rq.getRequest_id().isEmpty()){
+            return ResponseEntity.badRequest().body(this.reponseError("Không để trống request_id", "123645987"));
+        }
+        if (rq.getSoCCCD() == null || rq.getSoCCCD().isEmpty()){
+            return ResponseEntity.badRequest().body(this.reponseError("Không để trống getSoCCCD", "123645987"));
+        }
+        List<DataHistoryDto> dataHistoryDtoList = Optional.ofNullable(
+                adminssionCheckinMapper.findByCreatedAt(rq.getMaCSKCB(), rq.getSoCCCD())
+        ).orElse(Collections.emptyList());
+
+        if (dataHistoryDtoList.isEmpty()) {
+            return ResponseEntity.ok(BaseResponseFail.builder()
+                    .statusCode(0)
+                    .errorDetail("Không tìm thấy lịch sử khám chữa bệnh")
+                    .build());
+        }
+        BaseReposeLookup<DataHistoryDto> baseReposeLookup = BaseReposeLookup.<DataHistoryDto>builder()
+                .statusCode(1)
+                .data(dataHistoryDtoList)
+                .build();
+        return ResponseEntity.ok(baseReposeLookup);
+
+    }
+
+    public ResponseEntity<?> sosuckhoedientu(Jwt jwt, LookupHistoryKcbRq rq) {
+
+        Map<String, Object> claims = jwt.getClaims();
+        ResponseEntity<?> permissionCheck = checkAccessPermissionByCccd(claims, rq.getSoCCCD());
+        if (permissionCheck != null) return permissionCheck;
+
+        List<Prehistoric> prehistoricsList = new ArrayList<>();
+        List<DataPatient> dataPatientList = new ArrayList<>();
+        List<Examination> examinationList = new ArrayList<>();
+        List<ClinicalResults> clinicalResultList = new ArrayList<>();
+        List<TreatmentProcess> treatmentProcessList = new ArrayList<>();
+        List<ClinicalResultsDto> clinicalResultsList = null;
+        List<Prescription> prescriptionList= null;
+        List<TreatmentProcessDto> treatmentProcessListDtos= null;
+        List<PrehistoricDtos> prehistorics =null;
+        List<ExaminationDto> examinationDtos = null;
+
+        if (rq.getMaCSKCB() == null || rq.getMaCSKCB().isEmpty()){
+            return ResponseEntity.badRequest().body(this.reponseError("Không để trống MaCSKCB", "123645987"));
+        }
+        if (rq.getRequest_id() == null || rq.getRequest_id().isEmpty()){
+            return ResponseEntity.badRequest().body(this.reponseError("Không để trống request_id", "123645987"));
+        }
+        if (rq.getSoCCCD() == null || rq.getSoCCCD().isEmpty()){
+            return ResponseEntity.badRequest().body(this.reponseError("Không để trống getSoCCCD", "123645987"));
+        }
+
+        List<InfoPatient> infoPatients = admissionMedicalRecordMapper.findDataPatientsCustorm(rq.getMaCSKCB(), rq.getSoCCCD());
+
+        if (!infoPatients.isEmpty()) {
+            for (InfoPatient infoPatient: infoPatients){
+                prehistorics = admissionMedicalRecordMapper.findDataPatientsCustormPrehistoric(rq.getMaCSKCB(), infoPatient.getCheckInId());
+                examinationDtos = admissionMedicalRecordMapper.findByDoKhamCustorm(rq.getMaCSKCB(), infoPatient.getCheckInId());
+                if (!examinationDtos.isEmpty()) {
+                    for (ExaminationDto item : examinationDtos) {
+                        clinicalResultsList = admisionMedMapper.findDataClinicalResultsCustorm(item.getMaCskcb(), item.getIdCheckIn());
+                        if (!clinicalResultsList.isEmpty()){
+                            for (ClinicalResultsDto clinicalResultsDto: clinicalResultsList){
+                                ClinicalResults clinicalResults = ClinicalResults.builder()
+                                        .ma_nhom(null)
+                                        .ten_nhom(null)
+                                        .ma_dich_vu(clinicalResultsDto.getMa_dich_vu())
+                                        .ten_dich_vu(null)
+                                        .ma_chi_so(clinicalResultsDto.getMa_chi_so())
+                                        .ten_chi_so(clinicalResultsDto.getTen_chi_so())
+                                        .gia_tri(clinicalResultsDto.getGia_tri())
+                                        .ket_luan(clinicalResultsDto.getKet_luan())
+                                        .ngay_kq(clinicalResultsDto.getNgay_kq())
+                                        .link_pacs(null)
+                                        .build();
+                                clinicalResultList.add(clinicalResults);
+                            }
+                        }
+                        prescriptionList = admissionCheckinRepository.findByPrescriptionList(item.getMaCskcb(), item.getIdCheckIn());
+
+                        treatmentProcessListDtos = admissionCheckinRepository.findByTreatmentProcessList(item.getMaCskcb(), item.getIdCheckIn());
+
+                        if (!treatmentProcessListDtos.isEmpty()){
+                            for (TreatmentProcessDto treatmentProcessDto: treatmentProcessListDtos){
+                                TreatmentProcess treatmentProcess = TreatmentProcess.builder()
+                                        .qt_benhly(treatmentProcessDto.getQt_benhly())
+                                        .tomtat_kq(treatmentProcessDto.getTomtat_kq())
+                                        .pp_dieutri(treatmentProcessDto.getPp_dieutri())
+                                        .ghi_chu_ngay_tai_kham(null)
+                                        .bac_si_dtri(null)
+                                        .dien_thoai_bac_si(null)
+                                        .build();
+
+                                treatmentProcessList.add(treatmentProcess);
+                            }
+                        }
+                        String tenNoiDen = getNameFacility(item.getMaNoiDen());
+                        String tenNoiDi = getNameFacility(item.getMaNoiDi());
+                        Examination examination = Examination.builder()
+                                .ma_cskcb(item.getMaCskcb())
+                                .ten_cskcb(item.getTenCskcb())
+                                .ma_noi_di(item.getMaNoiDi())
+                                .ly_do_vv(item.getLyDoVv())
+                                .ma_loai_kcb(item.getMaLoaiKcb())
+                                .ngay_vao(item.getNgayVao())
+                                .ngay_ra(item.getNgayRa())
+                                .ket_qua_dtri(item.getKetQuaDtri())
+                                .ma_loai_rv(item.getMaLoaiRv())
+                                .ma_noi_den(item.getMaNoiDen())
+                                .chan_doan_rv(item.getChanDoanRv())
+                                .ma_benh(item.getMaBenh())
+                                .ten_benh(null)
+                                .ghi_chu(item.getGhiChu())
+                                .ten_noi_den(tenNoiDen)
+                                .ten_noi_di(tenNoiDi)
+                                .kq_can_lam_sang(clinicalResultList)
+                                .donthuoc_dake(prescriptionList)
+                                .quatrinh_dieutri(treatmentProcessList)
+                                .build();
+                        examinationList.add(examination);
+                    }
+
+                }
+                if (!prehistorics.isEmpty()){
+                    String ngayVaoRa = prehistorics.get(0).getNgayVao() + " to " + prehistorics.get(0).getNgayRa();
+                    Prehistoric prehistoric = Prehistoric.builder()
+                            .ngay_vao_ngay_ra(ngayVaoRa)
+                            .ma_cskcb(prehistorics.get(0).getMaCskcb())
+                            .ten_cskcb(prehistorics.get(0).getTenCskcb())
+                            .chan_doan_rv(prehistorics.get(0).getChanDoanRv())
+                            .ma_benh(prehistorics.get(0).getMaBenh())
+                            .ten_benh(null)
+                            .build();
+                    prehistoricsList.add(prehistoric);
+                }
+                DataPatient dataPatient = DataPatient.builder()
+                        .ho_ten(infoPatient.getHoTen())
+                        .ngay_sinh(infoPatient.getNgaySinh())
+                        .gioi_tinh(infoPatient.getGioiTinh())
+                        .ma_dantoc(infoPatient.getMaDantoc())
+                        .ma_quoctich(infoPatient.getMaQuoctich())
+                        .ma_nghe_nghiep(infoPatient.getMaNgheNghiep())
+                        .so_cccd(infoPatient.getSoCccd())
+                        .ma_the_bhyt(infoPatient.getMaTheBhyt())
+                        .ma_dkbd(infoPatient.getMaDkbd())
+                        .dien_thoai(infoPatient.getDienThoai())
+                        .dia_chi(infoPatient.getDiaChi())
+                        .matinh_cu_tru(infoPatient.getMatinhCuTru())
+                        .mahuyen_cu_tru(infoPatient.getMahuyenCuTru())
+                        .maxa_cu_tru(infoPatient.getMaxaCuTru())
+                        .nguoi_giam_ho(infoPatient.getNguoiGiamHo())
+                        .tiensu(prehistoricsList)
+                        .dotkham(examinationList)
+                        .build();
+                dataPatientList.add(dataPatient);
+            }
+
+        }
+        System.out.println("dataPatientList = " + dataPatientList);
+        BaseReposeLookup<DataPatient> baseReposeLookup = BaseReposeLookup.<DataPatient>builder()
+                .statusCode(1)
+                .data(dataPatientList)
+                .build();
+        return  ResponseEntity.ok(baseReposeLookup);
+
+    }
 }

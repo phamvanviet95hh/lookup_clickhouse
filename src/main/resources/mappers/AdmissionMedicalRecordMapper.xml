@@ -375,4 +375,75 @@
             f.ma_cskb = #{cskb}
     </select>
 
+    <select id="findDataPatientsCustorm" resultType="com.example.clickhouse.dtos.datas.InfoPatient">
+        SELECT
+            ac.id AS checkInId,
+            p.hoTen                AS hoTen,
+            p.ngaySinh             AS ngaySinh,
+            p.gioiTinh             AS gioiTinh,
+            p.maDanToc             AS maDantoc,
+            p.maQuocTich           AS maQuoctich,
+            p.maNgheNghiep        AS maNgheNghiep,
+            p.soCccd               AS soCccd,
+            ac.maTheBhyt          AS maTheBhyt,
+            ac.maDkbd              AS maDkbd,
+            p.dienThoai            AS dienThoai,
+            p.diaChi               AS diaChi,
+            p.maTinhCuTru         AS matinhCuTru,
+            p.maHuyenCuTru        AS mahuyenCuTru,
+            p.maXaCuTru           AS maxaCuTru,
+            ac.nguoiGiamHo        AS nguoiGiamHo
+        FROM
+            iceberg.admision_medical_record amr
+                JOIN iceberg.admision_checkin ac ON amr.admision_checkin_uuid = ac.id
+                JOIN iceberg.patient p ON ac.patient_id = p.uuid
+                JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
+        WHERE
+            f.ma_cskb = #{maCSKCB}
+          AND p.soCccd = #{soCCCD}
+    </select>
+
+
+    <select id="findDataPatientsCustormPrehistoric" resultType="com.example.clickhouse.dtos.datas.PrehistoricDtos">
+        SELECT
+            ac.ngayVao                  AS ngayVao,
+            ac.ngayRa                   AS ngayRa,
+            f.maCskb                    AS maCskcb,
+            f.tenCskb                   AS tenCskcb,
+            amr.chanDoanRv            AS chanDoanRv,
+            amr.maBenhChinh           AS maBenh
+        FROM
+            iceberg.admision_medical_record amr
+                JOIN iceberg.admision_checkin ac ON amr.admision_checkin_uuid = ac.id
+                JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
+        WHERE
+            f.ma_cskb = #{maCSKCB}
+          AND ac.id = #{checkInId}
+    </select>
+
+    <select id="findByDoKhamCustorm" resultType="com.example.clickhouse.dtos.datas.ExaminationDto">
+        SELECT
+            ac.id                              AS idCheckIn,
+            f.ma_cskb                          AS maCskcb,
+            f.ten_cskb                         AS tenCskb,
+            ac.maNoiDi                       AS maNoiDi,
+            ac.lyDoVv                        AS lyDoVv,
+            amr.maLoaiKcb                    AS maLoaiKcb,
+            ac.ngayVao                        AS ngayVao,
+            ac.ngayRa                         AS ngayRa,
+            amr.ketQuaDt                   AS ketQuaDtri,
+            ac.maLoaiRv                      AS maLoaiRv,
+            ac.maNoiDen                      AS maNoiDen,
+            amr.chanDoanRv                  AS chanDoanRv,
+            amr.maBenhChinh                 AS maBenh,
+            amr.ghiChu                        AS ghiChu
+        FROM
+            iceberg.admision_medical_record amr
+                JOIN iceberg.admision_checkin ac ON amr.admision_checkin_uuid = ac.id
+                JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
+        WHERE
+            f.ma_cskb = #{maCSKCB}
+          AND ac.id = #{checkInId}
+    </select>
+
 </mapper>

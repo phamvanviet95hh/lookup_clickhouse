@@ -27,4 +27,6 @@ public interface AdminssionCheckinMapper {
     List<PhauthuatThuthuat> findByPhauThuatThuThuat(String soCccdNnd);
 
     List<QuatrinhDieutri> findByQuaTrinhDieuTri(String soCccdNnd);
+
+    List<DataHistoryDto> findByCreatedAt(String maCSKCB, String soCCCD);
 }
