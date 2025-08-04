@@ -5,13 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class InfoPatient {
 
-    private Long checkInId;
+    private String id;
     private String hoTen;
     private String ngaySinh;
     private String gioiTinh;

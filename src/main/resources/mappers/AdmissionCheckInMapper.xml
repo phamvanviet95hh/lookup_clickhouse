@@ -191,4 +191,37 @@
           AND p.soCccd = #{soCCCD}
     </select>
 
+
+    <select id="findByPrescriptionList" resultType="com.example.clickhouse.dtos.datas.Prescription">
+
+        <!-- This is a placeholder for any additional queries you may want to add in the future -->
+        SELECT
+        am.maThuoc AS ma_thuoc,
+        am.hamLuong AS ten_thuoc_ham_luong,
+        am.donViTinh AS don_vi_tinh,
+        am.duongDung AS duong_dung,
+        am.soLuong AS so_luong,
+        am.lieuDung AS lieu_dung,
+        am.cachDung AS cach_dung
+        FROM iceberg.admision_checkin ac
+        INNER JOIN iceberg.admision_med am ON am.admision_checkin_uuid = ac.id
+        WHERE ac.id = #{idCheckIn}
+        AND ac.maCskb = #{maCskcb}
+
+    </select>
+
+    <select id="findByTreatmentProcessList" resultType="com.example.clickhouse.dtos.datas.TreatmentProcessDto">
+
+        SELECT
+            ar.qtBenhly AS qt_benhly,
+            ar.tomtatKq AS tomtat_kq,
+            ar.ppDieuTri AS pp_dieutri
+        FROM iceberg.admision_checkin ac
+                 INNER JOIN iceberg.admision_referral ar ON ar.admision_checkin_uuid = ac.id
+        WHERE ac.id = #{idCheckIn}
+          AND ac.maCskb = #{maCskcb}
+
+    </select>
+
+
 </mapper>

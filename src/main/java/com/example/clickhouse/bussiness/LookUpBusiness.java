@@ -2,27 +2,30 @@ package com.example.clickhouse.bussiness;
 
 
 import com.example.clickhouse.dtos.datas.*;
-import com.example.clickhouse.dtos.reponses.BaseReposeLookup;
-import com.example.clickhouse.dtos.reponses.BaseResponseFail;
-import com.example.clickhouse.dtos.reponses.ElectronicHumanHospitalError;
-import com.example.clickhouse.dtos.reponses.ElectronicHumanHospitalResponse;
-import com.example.clickhouse.dtos.requests.DataNhiRq;
-import com.example.clickhouse.dtos.requests.ElectronicHumanHospitalRq;
-import com.example.clickhouse.dtos.requests.ElectronicHumanMaTraCuuRq;
-import com.example.clickhouse.dtos.requests.LookupHistoryKcbRq;
+import com.example.clickhouse.dtos.reponses.*;
+import com.example.clickhouse.dtos.requests.*;
 import com.example.clickhouse.entitys.auth.MedicalXml;
 import com.example.clickhouse.mappers.*;
 import com.example.clickhouse.models.DataNhi;
 import com.example.clickhouse.repositories.AccountRegisterRepository;
 import com.example.clickhouse.repositories.MedicalXmlRepository;
 import com.example.clickhouse.services.MinioService;
+import com.google.j2objc.annotations.AutoreleasePool;
+import org.apache.ibatis.session.RowBounds;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -48,6 +51,9 @@ public class LookUpBusiness {
 
     @Autowired
     private AdmissionMedicalRecordMapper admissionMedicalRecordMapper;
+
+    @Autowired
+    private MedicalXmlMapper  medicalXmlMapper;
 
     @Autowired
     private AdmisionMedMapper admisionMedMapper;
@@ -388,8 +394,10 @@ public class LookUpBusiness {
         List<Prehistoric> prehistoricsList = new ArrayList<>();
         List<DataPatient> dataPatientList = new ArrayList<>();
         List<Examination> examinationList = new ArrayList<>();
+        List<SurgicalProcedure> surgicalProcedures = new ArrayList<>();
         List<ClinicalResults> clinicalResultList = new ArrayList<>();
         List<TreatmentProcess> treatmentProcessList = new ArrayList<>();
+        List<SurgicalProcedure> surgicalProcedureList = null;
         List<ClinicalResultsDto> clinicalResultsList = null;
         List<Prescription> prescriptionList= null;
         List<TreatmentProcessDto> treatmentProcessListDtos= null;
@@ -410,8 +418,8 @@ public class LookUpBusiness {
 
         if (!infoPatients.isEmpty()) {
             for (InfoPatient infoPatient: infoPatients){
-                prehistorics = admissionMedicalRecordMapper.findDataPatientsCustormPrehistoric(rq.getMaCSKCB(), infoPatient.getCheckInId());
-                examinationDtos = admissionMedicalRecordMapper.findByDoKhamCustorm(rq.getMaCSKCB(), infoPatient.getCheckInId());
+                prehistorics = admissionMedicalRecordMapper.findDataPatientsCustormPrehistoric(rq.getMaCSKCB(), infoPatient.getId());
+                examinationDtos = admissionMedicalRecordMapper.findByDoKhamCustorm(rq.getMaCSKCB(), infoPatient.getId());
                 if (!examinationDtos.isEmpty()) {
                     for (ExaminationDto item : examinationDtos) {
                         clinicalResultsList = admisionMedMapper.findDataClinicalResultsCustorm(item.getMaCskcb(), item.getIdCheckIn());
@@ -432,10 +440,9 @@ public class LookUpBusiness {
                                 clinicalResultList.add(clinicalResults);
                             }
                         }
-                        prescriptionList = admissionCheckinRepository.findByPrescriptionList(item.getMaCskcb(), item.getIdCheckIn());
-
-                        treatmentProcessListDtos = admissionCheckinRepository.findByTreatmentProcessList(item.getMaCskcb(), item.getIdCheckIn());
-
+                        prescriptionList = adminssionCheckinMapper.findByPrescriptionList(item.getMaCskcb(), item.getIdCheckIn());
+                        treatmentProcessListDtos = adminssionCheckinMapper.findByTreatmentProcessList(item.getMaCskcb(), item.getIdCheckIn());
+                        surgicalProcedureList = adminssionCheckinMapper.findBySurgicalProcedureList(item.getMaCskcb(), item.getIdCheckIn());
                         if (!treatmentProcessListDtos.isEmpty()){
                             for (TreatmentProcessDto treatmentProcessDto: treatmentProcessListDtos){
                                 TreatmentProcess treatmentProcess = TreatmentProcess.builder()
@@ -450,8 +457,10 @@ public class LookUpBusiness {
                                 treatmentProcessList.add(treatmentProcess);
                             }
                         }
-                        String tenNoiDen = getNameFacility(item.getMaNoiDen());
-                        String tenNoiDi = getNameFacility(item.getMaNoiDi());
+
+                        String tenNoiDen = item.getMaNoiDen() == null ? null : admissionMedicalRecordMapper.getNoiDen(item.getMaNoiDen());
+                        String tenNoiDi = item.getMaNoiDi() == null ? null : admissionMedicalRecordMapper.getNoiDi(item.getMaNoiDi());
+
                         Examination examination = Examination.builder()
                                 .ma_cskcb(item.getMaCskcb())
                                 .ten_cskcb(item.getTenCskcb())
@@ -471,6 +480,7 @@ public class LookUpBusiness {
                                 .ten_noi_di(tenNoiDi)
                                 .kq_can_lam_sang(clinicalResultList)
                                 .donthuoc_dake(prescriptionList)
+//                                .phauthuat_thuthuat()
                                 .quatrinh_dieutri(treatmentProcessList)
                                 .build();
                         examinationList.add(examination);
@@ -512,7 +522,7 @@ public class LookUpBusiness {
             }
 
         }
-        System.out.println("dataPatientList = " + dataPatientList);
+
         BaseReposeLookup<DataPatient> baseReposeLookup = BaseReposeLookup.<DataPatient>builder()
                 .statusCode(1)
                 .data(dataPatientList)
@@ -520,4 +530,90 @@ public class LookUpBusiness {
         return  ResponseEntity.ok(baseReposeLookup);
 
     }
+
+
+    public ResponseEntity<?> lichsudongbofiletonghop(LookupHistoryTH rq, int size, int page) {
+        if (rq.getTuNgay().isEmpty()) {
+            return ResponseEntity.ok(this.reponseError("Không để trống ngày bắt đầu", null));
+        }
+        if (rq.getDenNgay().isEmpty()) {
+            return ResponseEntity.ok(this.reponseError("Không để trống ngày kết thúc", null));
+        }
+
+        LocalDateTime startDate = convertToStartOfDay(rq.getTuNgay());
+        LocalDateTime endDate = convertToEndOfDay(rq.getDenNgay());
+
+
+        Pageable pageable = PageRequest.of(page, size);
+        int offset = page * size;
+        RowBounds rowBounds = new RowBounds(offset, size);
+
+        List<LookupHistoryResponseTH> lookupHistoryResponseTHList = medicalXmlMapper.findByCreatedAt(
+                startDate, endDate, rq.getLoaiHoSo(), rowBounds
+        );
+
+        Long totalRecord = medicalXmlMapper.findByUpdatedAt(startDate, endDate, rq.getLoaiHoSo());
+
+
+        Page<LookupHistoryResponseTH> pageResult = new PageImpl<>(
+                lookupHistoryResponseTHList, pageable, totalRecord != null ? totalRecord : 0
+        );
+
+        BaseReposeLookupTH<LookupHistoryResponseTH> baseReposeLookup = BaseReposeLookupTH.<LookupHistoryResponseTH>builder()
+                .statusCode(1)
+                .totalRecord(totalRecord != null ? totalRecord : 0)
+                .data(pageResult.getContent())
+                .build();
+
+        return ResponseEntity.ok(baseReposeLookup);
+    }
+
+    public static LocalDateTime convertToStartOfDay(String dateStr) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        LocalDate localDate = LocalDate.parse(dateStr, formatter);
+        return localDate.atStartOfDay();
+    }
+
+    public static LocalDateTime convertToEndOfDay(String dateStr) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        LocalDate localDate = LocalDate.parse(dateStr, formatter);
+        return localDate.atTime(23, 59, 59);
+    }
+
+    public ResponseEntity<?> lichsudongbofilechitiet(LookupHistoryTH rq, int size, int page) {
+
+        if (rq.getTuNgay().isEmpty()) {
+            return ResponseEntity.ok(this.reponseError("Không để trống ngày bắt đầu", null));
+        }
+        if (rq.getDenNgay().isEmpty()) {
+            return ResponseEntity.ok(this.reponseError("Không để trống ngày kết thúc", null));
+        }
+
+        LocalDateTime startDate = convertToStartOfDay(rq.getTuNgay());
+        LocalDateTime endDate = convertToEndOfDay(rq.getDenNgay());
+
+        int offset = page * size;
+        RowBounds rowBounds = new RowBounds(offset, size);
+
+        List<LookupHistoryResponseDetail> lookupHistoryResponseTHList = medicalXmlMapper.findByMaLk(
+                startDate, endDate, rq.getLoaiHoSo(), rowBounds
+        );
+
+        Long totalRecord = medicalXmlMapper.findByUpdatedAt(startDate, endDate, rq.getLoaiHoSo());
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<LookupHistoryResponseDetail> pageResult = new PageImpl<>(
+                lookupHistoryResponseTHList, pageable, totalRecord != null ? totalRecord : 0
+        );
+
+        BaseReposeLookupTH<LookupHistoryResponseDetail> baseReposeLookup = BaseReposeLookupTH.<LookupHistoryResponseDetail>builder()
+                .statusCode(1)
+                .totalRecord(totalRecord != null ? totalRecord : 0)
+                .data(pageResult.getContent())
+                .build();
+
+        return ResponseEntity.ok(baseReposeLookup);
+    }
+
+
 }

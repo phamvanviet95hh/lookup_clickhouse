@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.clickhouse.mappers.MedicalXmlMapper">
+
+    <select id="findByCreatedAt" resultType="com.example.clickhouse.dtos.reponses.LookupHistoryResponseTH">
+        SELECT
+            TO_CHAR(mx.created_at, 'DD/MM/YYYY') AS ngay_gui,
+            COUNT(mx.id) AS tong_so,
+            SUM(CASE WHEN mx.status = 'true' THEN 1 ELSE 0 END) AS so_hs_thanh_cong,
+            SUM(CASE WHEN mx.status = 'false' THEN 1 ELSE 0 END) AS so_hs_loi,
+            mx.ma_tinh AS ma_tinh,
+            mx.ma_cskcb AS ma_cskcb,
+            mx.ten_cskcb AS ten_cskcb
+        FROM
+            medical_xml mx
+        WHERE
+            mx.loai_ho_so = #{loaiHoSo}
+          AND mx.created_at BETWEEN #{startDate} AND #{endDate}
+        GROUP BY
+            mx.ma_cskcb,
+            mx.ten_cskcb,
+            TO_CHAR(mx.created_at, 'DD/MM/YYYY'),
+            mx.ma_tinh
+    </select>
+
+</mapper>
