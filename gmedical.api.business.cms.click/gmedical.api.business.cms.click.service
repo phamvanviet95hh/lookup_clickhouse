@@ -1,0 +1,14 @@
+[Unit]
+Description=gmedical.api.business.cms.click
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/java -jar /gmedical/gmedical.api.business.cms.click/gmedical.api.business.cms.click.jar --spring.config.location=/gmedical/gmedical.api.business.cms.click/application.properties
+User=root
+StandardOutput=journal+console
+TimeoutStopSec=10
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

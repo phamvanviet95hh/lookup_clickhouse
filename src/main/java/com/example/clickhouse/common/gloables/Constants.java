@@ -15,6 +15,8 @@ public class Constants {
 
         public static final String LOOKUP = "/tracuu";
 
+        public static final String BACKOFFICE = "/backoffice";
+
     }
 
 }
