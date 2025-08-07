@@ -131,6 +131,9 @@
         <if test="chanDoan != null and chanDoan != ''">
             AND amr.chanDoanRv = #{chanDoan}
         </if>
+        <if test="sortBy != null and sortBy != ''">
+            ORDER BY ${sortBy} <if test="sortOrder != null and sortOrder != ''"> ${sortOrder} </if>
+        </if>
          LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
@@ -313,6 +316,9 @@
         </if>
         <if test="ngayHenDen != null and ngayHenDen != ''">
             AND aa.ngayHenKl &lt;= #{ngayHenDen}
+        </if>
+        <if test="sortBy != null and sortBy != ''">
+            ORDER BY ${sortBy} <if test="sortOrder != null and sortOrder != ''"> ${sortOrder} </if>
         </if>
         LIMIT #{pageSize} OFFSET #{offset}
     </select>

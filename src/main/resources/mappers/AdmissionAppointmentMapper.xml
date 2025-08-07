@@ -139,6 +139,9 @@
         <if test="ngayVaoDen != null and ngayVaoDen != ''">
             AND ar.ngayVao &lt;= #{ngayVaoDen}
         </if>
+        <if test="sortBy != null and sortBy != ''">
+            ORDER BY ${sortBy} <if test="sortOrder != null and sortOrder != ''"> ${sortOrder} </if>
+        </if>
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 

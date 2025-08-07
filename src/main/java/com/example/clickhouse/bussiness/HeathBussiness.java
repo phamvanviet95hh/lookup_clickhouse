@@ -280,6 +280,11 @@ public class HeathBussiness {
     }
 
     public ResponseEntity<?> danhsach(SoSucKhoeDienTuList rq) {
+        String maCskcb =null;
+        String chanDoan = null;
+        String sortBy = null;
+        String sortOrder = null;
+        List<SoKhamChuaBenhListData> listSoSucKhoes = new ArrayList<>();
         if (Objects.equals(rq.getNamQt(), "") || Objects.equals(rq.getSoCCCD(), "")){
             BaseResponseFail baseResponseFail = BaseResponseFail.builder()
                     .statusCode(0)
@@ -289,14 +294,24 @@ public class HeathBussiness {
             return ResponseEntity.ok(baseResponseFail);
         }
 
-        Pageable pageable = PageRequest.of(rq.getPagination().getPage(), rq.getPagination().getPageSize(), Sort.by( Sort.Direction.fromString(rq.getSort().getSortOrder()) ,rq.getSort().getSortBy()));
+        Pageable pageable = PageRequest.of(rq.getPagination().getPage(), rq.getPagination().getPageSize());
         List<ListSoSucKhoe> listSoSucKhoess = new ArrayList<>();
         Cskcb cskcb = null;
-        String maCskcb = rq.getFilters().getCskcb().trim().isEmpty() ? null : rq.getFilters().getCskcb().trim();
-        String chanDoan = rq.getFilters().getChan_doan().trim().isEmpty() ? null : rq.getFilters().getChan_doan().trim();
+        if (rq.getFilters() != null) {
+            maCskcb = rq.getFilters().getCskcb() == null ? null : rq.getFilters().getCskcb().trim();
+            chanDoan = rq.getFilters().getChan_doan() == null ? null : rq.getFilters().getChan_doan().trim();
+        }
+
+        if (rq.getSort() != null){
+            sortBy = rq.getSort().getSortBy() != null ? rq.getSort().getSortBy().trim() : null;
+            sortOrder = rq.getSort().getSortOrder() != null ? rq.getSort().getSortOrder().trim() : null;
+        }
+
         int offset = pageable.getPageNumber() * pageable.getPageSize();
 
-        List<SoKhamChuaBenhListData> listSoSucKhoes = admissionMedicalRecordMapper.findGetListSoSucKhoeDienTu(rq.getNamQt(), rq.getSoCCCD(),maCskcb, chanDoan, pageable.getPageSize(),offset);
+        listSoSucKhoes = admissionMedicalRecordMapper.findGetListSoSucKhoeDienTu(rq.getNamQt(), rq.getSoCCCD(),maCskcb, chanDoan,
+                    pageable.getPageSize(),offset, sortBy, sortOrder);
+
         PaginationRp paginationRp = null;
         long total = admissionMedicalRecordMapper.countSoKhamChuaBenh(
                 rq.getNamQt(), rq.getSoCCCD(), maCskcb, chanDoan);
@@ -691,23 +706,36 @@ public class HeathBussiness {
 
     public ResponseEntity<?> danhsachGiayHen(AppointmentLetterListRq rq) {
 
+        //Khai báo các biến cần thiết
         List<AppointmentLetterDataListDs> appointmentLetterDataLists = new ArrayList<>();
         List<AppointmentLetterDataDs> appointmentLetterDataPage =null;
         PaginationRp paginationRp = null;
         Cskcb cskcb =null;
+        String cskcbFilter = null;
+        String chanDoan = null;
+        String ngayHenTu = null;
+        String ngayHenDen = null;
+        String sortBy = null;
+        String sortOrder = null;
 
+        //Kiểm tra các trường và set value đầu vào
         String soCccd = rq.getSoCCCD().trim();
         String namQt = rq.getNamQt().trim();
-        String cskcbFilter = rq.getFilters().getCskcb().trim().isEmpty() ? null : rq.getFilters().getCskcb().trim();
-        String chanDoan = rq.getFilters().getChan_doan().trim().isEmpty() ? null : rq.getFilters().getChan_doan().trim();
-        String ngayHenTu = rq.getFilters().getNgay_hen_tu().isEmpty() ? null : rq.getFilters().getNgay_hen_tu();
-        String ngayHenDen = rq.getFilters().getNgay_hen_den().isEmpty() ? null : rq.getFilters().getNgay_hen_den();
-        String sortBy = rq.getSort().getSortBy().trim().isEmpty() ? "id" : rq.getSort().getSortBy().trim();
-        String sortOrder = rq.getSort().getSortOrder().trim().isEmpty() ? "asc" : rq.getSort().getSortOrder().trim();
+        if (rq.getFilters() != null){
+            cskcbFilter = rq.getFilters().getCskcb().trim().isEmpty() ? null : rq.getFilters().getCskcb().trim();
+            chanDoan = rq.getFilters().getChan_doan().trim().isEmpty() ? null : rq.getFilters().getChan_doan().trim();
+            ngayHenTu = rq.getFilters().getNgay_hen_tu().isEmpty() ? null : rq.getFilters().getNgay_hen_tu();
+            ngayHenDen = rq.getFilters().getNgay_hen_den().isEmpty() ? null : rq.getFilters().getNgay_hen_den();
+        }
+        if(rq.getSort() != null){
+            sortBy = rq.getSort().getSortBy().trim().isEmpty() ? null : rq.getSort().getSortBy().trim();
+            sortOrder = rq.getSort().getSortOrder().trim().isEmpty() ? null : rq.getSort().getSortOrder().trim();
+        }
+
         Integer page = rq.getPagination().getPage() == null ? 0 : rq.getPagination().getPage();
         Integer pageSize = rq.getPagination().getPageSize() == null ? 10 : rq.getPagination().getPageSize();
-        System.out.println("Payload : " + soCccd + "/" + namQt + "/" + cskcbFilter + "/" + chanDoan + "/" + ngayHenTu + "/"+ ngayHenDen + "/"
-                + sortBy + "/" + sortOrder + "/" + page + "/" + pageSize + "/" );
+
+        // Check các trường hợp không hợp lệ
         if (ngayHenDen == null && ngayHenTu != null){
             BaseResponseFail baseResponseFail = BaseResponseFail.builder()
                     .statusCode(0)
@@ -725,20 +753,28 @@ public class HeathBussiness {
 
             return ResponseEntity.ok(baseResponseFail);
         }else {
-            Pageable pageable = PageRequest.of(page, pageSize, Sort.by( Sort.Direction.fromString(sortOrder) ,sortBy));
+
+            //Tạo Pageable và offset
+            Pageable pageable = PageRequest.of(page, pageSize);
             int offset = pageable.getPageNumber() * pageable.getPageSize();
+
+            //Lấy danh sách Giấy hẹn khám lại từ mapper
             appointmentLetterDataPage = admissionMedicalRecordMapper.findAppointmentLetterListCustorm(namQt, soCccd,
-                    cskcbFilter,ngayHenTu, ngayHenDen, chanDoan, pageable.getPageSize(),offset);
+                    cskcbFilter,ngayHenTu, ngayHenDen, chanDoan, pageable.getPageSize(),offset, sortBy, sortOrder);
             long total = admissionMedicalRecordMapper.countAppointmentLetter(
                     namQt, soCccd,
                     cskcbFilter,ngayHenTu, ngayHenDen, chanDoan);
             Page<AppointmentLetterDataDs> pageAppointmentLetter = new PageImpl<>(appointmentLetterDataPage, pageable, total);
+
+            //Tạo PaginationRp
             paginationRp = PaginationRp.builder()
                     .page(pageAppointmentLetter.getNumber())
                     .pageSize(pageAppointmentLetter.getSize())
                     .totalPages(pageAppointmentLetter.getTotalPages())
                     .totalItems((int) pageAppointmentLetter.getTotalElements())
                     .build();
+
+            // Nếu danh sách không rỗng, chuyển đổi dữ liệu
             if(!appointmentLetterDataPage.isEmpty()){
                 for (AppointmentLetterDataDs data : appointmentLetterDataPage){
                     cskcb = Cskcb.builder()
@@ -760,6 +796,7 @@ public class HeathBussiness {
 
         }
 
+        // Tạo ResponseListSoSucKhoe
         ResponseListSoSucKhoe<AppointmentLetterDataListDs> responseListSoSucKhoe = ResponseListSoSucKhoe.<AppointmentLetterDataListDs>builder()
                 .statusCode(1)
                 .pagination(paginationRp)
@@ -1004,26 +1041,46 @@ public class HeathBussiness {
 
     public ResponseEntity<?> giaychuyentuyenDs(TransferPaperListRq rq) {
 
-        String namQt = rq.getNamQt().trim();
-        String soCccd = rq.getSoCCCD().trim();
-        String cskcbFilter = rq.getFilters().getCskcb().trim().isEmpty() ? null : rq.getFilters().getCskcb().trim();
-        String noiDiFilter = rq.getFilters().getNoi_di().trim().isEmpty() ? null : rq.getFilters().getNoi_di().trim();
-        String noiDenFilter = rq.getFilters().getNoi_den().trim().isEmpty() ? null : rq.getFilters().getNoi_den().trim();
-        String ngayVaoTu = rq.getFilters().getNgay_vao_tu().isEmpty() ? null : rq.getFilters().getNgay_vao_tu();
-        String ngayVaoDen = rq.getFilters().getNgay_vao_den().isEmpty() ? null : rq.getFilters().getNgay_vao_den();
-        String sortBy = rq.getSort().getSortBy().trim().isEmpty() ? "id" : rq.getSort().getSortBy().trim();
-        String sortOrder = rq.getSort().getSortOrder().trim().isEmpty() ? "asc" : rq.getSort().getSortOrder().trim();
-        Integer page = rq.getPagination().getPage() == null ? 0 : rq.getPagination().getPage();
-        Integer pageSize = rq.getPagination().getPageSize() == null ? 10 : rq.getPagination().getPageSize();
-
+        //Khai báo các biến cần thiết
+        String cskcbFilter = null;
+        String noiDiFilter = null;
+        String noiDenFilter = null;
+        String ngayVaoTu = null;
+        String ngayVaoDen = null;
+        String sortBy = null;
+        String sortOrder = null;
         NoiDi noiDi = null;
         NoiDen noiDen = null;
-
         List<TransferPaperListDatas> transferPaperListDatas = new ArrayList<>();
         List<TransferPaperListData> transferPaperListData = null;
         PaginationRp paginationRp = null;
-        Pageable pageable = PageRequest.of(page, pageSize, Sort.by( Sort.Direction.fromString(sortOrder) ,sortBy));
+
+
+        //Kiểm tra các trường và set value đầu vào
+        String namQt = rq.getNamQt().trim();
+        String soCccd = rq.getSoCCCD().trim();
+
+        if(rq.getFilters() != null){
+            cskcbFilter = rq.getFilters().getCskcb().trim().isEmpty() ? null : rq.getFilters().getCskcb().trim();
+            noiDiFilter = rq.getFilters().getNoi_di().trim().isEmpty() ? null : rq.getFilters().getNoi_di().trim();
+            noiDenFilter = rq.getFilters().getNoi_den().trim().isEmpty() ? null : rq.getFilters().getNoi_den().trim();
+            ngayVaoTu = rq.getFilters().getNgay_vao_tu().isEmpty() ? null : rq.getFilters().getNgay_vao_tu();
+            ngayVaoDen = rq.getFilters().getNgay_vao_den().isEmpty() ? null : rq.getFilters().getNgay_vao_den();
+        }
+        if (rq.getSort() == null) {
+            sortBy = rq.getSort().getSortBy().trim().isEmpty() ? "id" : rq.getSort().getSortBy().trim();
+            sortOrder = rq.getSort().getSortOrder().trim().isEmpty() ? "asc" : rq.getSort().getSortOrder().trim();
+        }
+
+        Integer page = rq.getPagination().getPage() == null ? 0 : rq.getPagination().getPage();
+        Integer pageSize = rq.getPagination().getPageSize() == null ? 10 : rq.getPagination().getPageSize();
+
+
+        //Tạo Pageable và offset
+        Pageable pageable = PageRequest.of(page, pageSize);
         int offset = pageable.getPageNumber() * pageable.getPageSize();
+
+        //Kiểm tra các trường hợp không hợp lệ
         if (Objects.equals(namQt, "") || Objects.equals(soCccd, "")) {
             BaseResponseFail baseResponseFail = BaseResponseFail.builder()
                     .statusCode(0)
@@ -1032,16 +1089,23 @@ public class HeathBussiness {
 
             return ResponseEntity.ok(baseResponseFail);
         }else {
-            transferPaperListData = appointmentLetterMapper.findTransferPaperListDatas(namQt, soCccd, cskcbFilter, noiDiFilter, noiDenFilter, ngayVaoTu, ngayVaoDen, pageable.getPageSize(), offset);
+
+            //Lấy danh sách Giấy chuyển tuyến từ mapper
+            transferPaperListData = appointmentLetterMapper.findTransferPaperListDatas(namQt, soCccd, cskcbFilter, noiDiFilter, noiDenFilter, ngayVaoTu,
+                    ngayVaoDen, pageable.getPageSize(), offset, sortBy, sortOrder);
             long total = appointmentLetterMapper.countTransferPaperListData(
                     namQt, soCccd, cskcbFilter, noiDiFilter, noiDenFilter, ngayVaoTu, ngayVaoDen);
             Page<TransferPaperListData> paperListData = new PageImpl<>(transferPaperListData, pageable, total);
+
+            //Tạo PaginationRp
             paginationRp = PaginationRp.builder()
                     .page(paperListData.getNumber())
                     .pageSize(paperListData.getSize())
                     .totalPages(paperListData.getTotalPages())
                     .totalItems((int) paperListData.getTotalElements())
                     .build();
+
+            // Nếu danh sách không rỗng, chuyển đổi dữ liệu
             if (!transferPaperListData.isEmpty()){
                 for (TransferPaperListData listData : transferPaperListData){
                     Cskcb cskcb = Cskcb.builder()
@@ -1084,7 +1148,7 @@ public class HeathBussiness {
         }
 
 
-
+        // Tạo ResponseListSoSucKhoe
         ResponseListSoSucKhoe<TransferPaperListDatas> transferPaperListDatasResponseListSoSucKhoe = ResponseListSoSucKhoe.<TransferPaperListDatas>builder()
                 .statusCode(1)
                 .pagination(paginationRp)

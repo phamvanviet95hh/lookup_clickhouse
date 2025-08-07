@@ -1,0 +1,553 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.clickhouse.mappers.DashboardMapper">
+
+    <select id="summary" resultType="com.example.clickhouse.dtos.datas.SummarySickRp">
+        select
+        formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m') ngayThang,
+        f.ten_tinh tenTinh,
+        f.ten_huyen tenHuyen,
+        f.ten_phuong tenPhuong,
+        count(1) as SoCaMac,
+        sum(case when amr.ketQuaDt in('5','8') then 1
+        else 0 end) SoCaTuVong
+        from
+        iceberg.admision_checkin ac
+        join iceberg.admision_medical_record amr
+        on ac.id = amr.admision_checkin_uuid
+        join iceberg.facility f
+        on ac.maCskb = f.ma_cskb
+        and f.ma_tinh  is not null
+        join iceberg.medical_facility_category mfc
+        on f.ma_cskb =mfc.ma_cskb
+        left join iceberg.facility_desease_code fdc
+        on
+        amr.maBenhChinh = fdc.sick_code
+        where
+        ac.createdAt between #{from} and #{to}
+        and amr.maBenhChinh is not null
+        <if test="isByt = 0">
+            and ac.maCskb in
+            <foreach collection="cskbs" item="cskb" open="(" separator="," close=")">
+                #{cskb}
+            </foreach>
+        </if>
+        <if test="level!=''">
+            and mfc.level = #{level}
+        </if>
+        group by
+        formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m'),
+        f.ten_tinh,
+        f.ten_huyen,
+        f.ten_phuong
+    </select>
+
+    <select id="top" resultType="com.example.clickhouse.dtos.datas.TopRp">
+        select
+        fdc.sick_code  code,
+        fdc.sick_name_vn as description,
+        f.ten_tinh tenTinh,
+        f.ten_huyen tenHuyen,
+        f.ten_phuong tenPhuong,
+        count(1) as total
+        from
+        iceberg.admision_checkin  ac
+        join iceberg.admision_medical_record amr
+        on ac.id = amr.admision_checkin_uuid
+        left join iceberg.facility_desease_code fdc
+        on
+        amr.maBenhChinh = fdc.sick_code
+        join iceberg.medical_facility_category mfc
+        on ac.maCskb =mfc.ma_cskb
+        join iceberg.facility f
+        on ac.maCskb = f.ma_cskb
+        and f.ma_tinh  is not null
+        where fdc.sick_code  is not null
+        and ac.createdAt between #{from} and #{to}
+        <if test="isByt = 0">
+            and ac.maCskb in
+            <foreach collection="cskbs" item="cskb" open="(" separator="," close=")">
+                #{cskb}
+            </foreach>
+        </if>
+        <if test="level!=''">
+            and mfc.level = #{level}
+        </if>
+        group by
+        fdc.sick_code,
+        fdc.sick_name_vn,
+        f.ten_tinh,
+        f.ten_huyen,
+        f.ten_phuong
+        order by count(1) desc
+    </select>
+
+    <select id="percent" resultType="com.example.clickhouse.dtos.datas.TopRp">
+        select
+        a.code,
+        a.description,
+        a.tenTinh,
+        a.tenHuyen,
+        a.tenPhuong,
+        max(a.totalCurrent) totalCurrent,
+        max(a.totalLast) totalLast,
+        (max(a.totalCurrent)/
+        (CASE
+        WHEN max(a.totalLast) = 0 THEN 1
+        ELSE max(a.totalLast) end)) as rate
+        from
+        (
+        select
+        fdc.sick_code code,
+        fdc.sick_name_vn as description,
+        f.ten_tinh tenTinh,
+        f.ten_huyen tenHuyen,
+        f.ten_phuong tenPhuong,
+        count(1) as totalCurrent,
+        0 as totalLast
+        from
+        iceberg.facility_desease_code fdc
+        join iceberg.admision_medical_record amr
+        on
+        amr.maBenhChinh = fdc.sick_code
+        join iceberg.admision_checkin  ac
+        on
+        ac.id = amr.admision_checkin_uuid
+        join iceberg.medical_facility_category mfc
+        on ac.maCskb =mfc.ma_cskb
+        join iceberg.facility f
+        on ac.maCskb = f.ma_cskb
+        and f.ma_tinh  is not null
+        where
+        ac.createdAt between #{from} and #{to}
+        <if test="isByt = 0">
+            and ac.maCskb in
+            <foreach collection="cskbs" item="cskb" open="(" separator="," close=")">
+                #{cskb}
+            </foreach>
+        </if>
+        <if test="level!=''">
+            and mfc.level = #{level}
+        </if>
+        group by
+        fdc.sick_code,
+        fdc.sick_name_vn,
+        f.ten_tinh,
+        f.ten_huyen,
+        f.ten_phuong
+        union all
+        select
+        fdc.sick_code code,
+        fdc.sick_name_vn as description,
+        f.ten_tinh tenTinh,
+        f.ten_huyen tenHuyen,
+        f.ten_phuong tenPhuong,
+        0 as totalCurrent,
+        count(1) as totalLast
+        from
+        iceberg.facility_desease_code fdc
+        join iceberg.admision_medical_record amr
+        on
+        amr.maBenhChinh = fdc.sick_code
+        join iceberg.admision_checkin  ac
+        on
+        ac.id = amr.admision_checkin_uuid
+        join iceberg.medical_facility_category mfc
+        on ac.maCskb =mfc.ma_cskb
+        join iceberg.facility f
+        on ac.maCskb = f.ma_cskb
+        and f.ma_tinh  is not null
+        where
+        ac.createdAt between #{fromlast} and #{tolast}
+        <if test="isByt = 0">
+            and ac.maCskb in
+            <foreach collection="cskbs" item="cskb" open="(" separator="," close=")">
+                #{cskb}
+            </foreach>
+        </if>
+        <if test="level!=''">
+            and mfc.level = #{level}
+        </if>
+        group by
+        fdc.sick_code,
+        fdc.sick_name_vn,
+        f.ten_tinh,
+        f.ten_huyen,
+        f.ten_phuong
+        ) a
+        group by
+        a.code,
+        a.description,
+        a.tenTinh,
+        a.tenHuyen,
+        a.tenPhuong
+        order by max(a.totalCurrent) desc
+    </select>
+
+    <!--    no done-->
+    <select id="summaryForQuality" resultType="com.example.clickhouse.dtos.reponses.SummaryQualityRp">
+        select  formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m') ngayThang,
+        f.ten_tinh tenTinh,
+        f.ten_huyen tenHuyen,
+        f.ten_phuong tenPhuong,
+        count(1) as soLuotKham,
+        sum (case when ac.maLoaiRv in('2','5') then 1 else 0 end) soLuongChuyenTuyen,
+        sum (case when ac.maDoituongKcb ='3' then 1 else 0 end) soLuongVuotTuyen
+        from
+        iceberg.admision_checkin  ac
+        join iceberg.facility f
+        on ac.maCskb = f.ma_cskb
+        and f.ma_tinh  is not null
+        join iceberg.medical_facility_category mfc
+        on f.ma_cskb =mfc.ma_cskb
+        where
+        ac.createdAt between #{from} and #{to}
+        <if test="isByt = 0">
+            and ac.maCskb in
+            <foreach collection="cskbs" item="cskb" open="(" separator="," close=")">
+                #{cskb}
+            </foreach>
+        </if>
+        <if test="level!=''">
+            and mfc.level = #{level}
+        </if>
+        group by
+        formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m'),
+        f.ten_tinh,
+        f.ten_huyen,
+        f.ten_phuong</select>
+
+    <select id="dischargeStatusForQuality" resultType="com.example.clickhouse.dtos.reponses.DischargeStatusRp">
+        select  formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m'),
+        f.ten_tinh tenTinh,
+        f.ten_huyen tenHuyen,
+        f.ten_phuong tenPhuong,
+        ac.maLoaiRv maRv,
+        fdtc.description tenRv,
+        count(1) total
+        from
+        iceberg.admision_checkin  ac
+        join iceberg.facility f
+        on ac.maCskb = f.ma_cskb
+        and f.ma_tinh  is not null
+        join iceberg.medical_facility_category mfc
+        on f.ma_cskb =mfc.ma_cskb
+        join iceberg.facility_discharge_type_code fdtc
+        on fdtc.code = ac.maLoaiRv
+        where
+        ac.createdAt between #{from} and #{to}
+        <if test="isByt = 0">
+            and ac.maCskb in
+            <foreach collection="cskbs" item="cskb" open="(" separator="," close=")">
+                #{cskb}
+            </foreach>
+        </if>
+        <if test="level!=''">
+            and mfc.level = #{level}
+        </if>
+        group by
+        formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m'),
+        f.ten_tinh,
+        f.ten_huyen,
+        f.ten_phuong,
+        ac.maLoaiRv,
+        fdtc.description
+    </select>
+
+    <select id="treatmentForQuality" resultType="com.example.clickhouse.dtos.reponses.TreatmentRp">
+        select  formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m') ngayThang,
+        f.ten_tinh tenTinh,
+        f.ten_huyen tenHuyen,
+        f.ten_phuong tenPhuong,
+        ac.ketQuaDtri maDtri,
+        ftrc.description tenDtri,
+        count(1) total
+        from
+        iceberg.admision_checkin  ac
+        join iceberg.facility f
+        on ac.maCskb = f.ma_cskb
+        and f.ma_tinh  is not null
+        join iceberg.medical_facility_category mfc
+        on f.ma_cskb =mfc.ma_cskb
+        join iceberg.facilty_treatment_result_code ftrc
+        on ftrc.code = ac.ketQuaDtri
+        where
+        ac.createdAt between #{from} and #{to}
+        <if test="isByt = 0">
+            and ac.maCskb in
+            <foreach collection="cskbs" item="cskb" open="(" separator="," close=")">
+                #{cskb}
+            </foreach>
+        </if>
+        <if test="level!=''">
+            and mfc.level = #{level}
+        </if>
+        group by
+        formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m'),
+        f.ten_tinh,
+        f.ten_huyen,
+        f.ten_phuong,
+        ac.ketQuaDtri,
+        ftrc.description
+    </select>
+
+    <select id="timeDtriForQuality" resultType="com.example.clickhouse.dtos.datas.TimeDTriRp">
+        select  formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m') ngayThang,
+        f.ten_tinh tenTinh,
+        f.ten_huyen tenHuyen,
+        f.ten_phuong tenPhuong,
+        AVG(
+        dateDiff(
+        'day',
+        parseDateTimeBestEffort(
+        concat(
+        substring(ac.ngayVao, 1, 4), '-',
+        substring(ac.ngayVao, 5, 2), '-',
+        substring(ac.ngayVao, 7, 2), ' ',
+        substring(ac.ngayVao, 9, 2), ':',
+        substring(ac.ngayVao, 11, 2), ':00'
+        )
+        ),
+        parseDateTimeBestEffort(
+        concat(
+        substring(ac.ngayRa, 1, 4), '-',
+        substring(ac.ngayRa, 5, 2), '-',
+        substring(ac.ngayRa, 7, 2), ' ',
+        substring(ac.ngayRa, 9, 2), ':',
+        substring(ac.ngayRa, 11, 2), ':00'
+        )
+        )
+        )
+        ) AS trungBinhSoNgayDTri
+        from
+        iceberg.admision_checkin  ac
+        join iceberg.facility f
+        on ac.maCskb = f.ma_cskb
+        and f.ma_tinh  is not null
+        join iceberg.medical_facility_category mfc
+        on f.ma_cskb =mfc.ma_cskb
+        where
+        ac.createdAt between #{from} and #{to}
+        <if test="isByt = 0">
+            and ac.maCskb in
+            <foreach collection="cskbs" item="cskb" open="(" separator="," close=")">
+                #{cskb}
+            </foreach>
+        </if>
+        <if test="level!=''">
+            and mfc.level = #{level}
+        </if>
+        group by
+        formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m'),
+        f.ten_tinh,
+        f.ten_huyen,
+        f.ten_phuong
+    </select>
+
+    <select id="service" resultType="com.example.clickhouse.dtos.datas.TimeDTriRp">
+        select  formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m') ngayThang,
+        f.ten_tinh tenTinh,
+        f.ten_huyen tenHuyen,
+        f.ten_phuong tenPhuong,
+        AVG(
+        dateDiff(
+        'day',
+        parseDateTimeBestEffort(
+        concat(
+        substring(ac.ngayVao, 1, 4), '-',
+        substring(ac.ngayVao, 5, 2), '-',
+        substring(ac.ngayVao, 7, 2), ' ',
+        substring(ac.ngayVao, 9, 2), ':',
+        substring(ac.ngayVao, 11, 2), ':00'
+        )
+        ),
+        parseDateTimeBestEffort(
+        concat(
+        substring(ac.ngayRa, 1, 4), '-',
+        substring(ac.ngayRa, 5, 2), '-',
+        substring(ac.ngayRa, 7, 2), ' ',
+        substring(ac.ngayRa, 9, 2), ':',
+        substring(ac.ngayRa, 11, 2), ':00'
+        )
+        )
+        )
+        ) AS trungBinhSoNgayDTri
+        from
+        iceberg.admision_checkin  ac
+        join iceberg.facility f
+        on ac.maCskb = f.ma_cskb
+        and f.ma_tinh  is not null
+        join iceberg.medical_facility_category mfc
+        on f.ma_cskb =mfc.ma_cskb
+        where
+        ac.createdAt between #{from} and #{to}
+        <if test="isByt = 0">
+            and ac.maCskb in
+            <foreach collection="cskbs" item="cskb" open="(" separator="," close=")">
+                #{cskb}
+            </foreach>
+        </if>
+        <if test="level!=''">
+            and mfc.level = #{level}
+        </if>
+        group by
+        formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m'),
+        f.ten_tinh,
+        f.ten_huyen,
+        f.ten_phuong
+    </select>
+
+    <select id="med" resultType="com.example.clickhouse.dtos.datas.MedRp">
+        select  formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m') ngayThang,
+        f.ten_tinh tenTinh,
+        f.ten_huyen tenHuyen,
+        f.ten_phuong tenPhuong,
+        count(distinct ac.patient_id) soLuongBnMuaThuoc,
+        sum(m.thanhTienBv::NUMERIC) as bntt,
+        sum(m.tBhtt::NUMERIC ) as bhtt,
+        sum(m.tBncct::NUMERIC) as bncct,
+        sum(m.tNguonKhac::NUMERIC ) as nguonkhac
+        from
+        iceberg.admision_checkin  ac
+        join iceberg.facility f
+        on ac.maCskb = f.ma_cskb
+        and f.ma_tinh  is not null
+        join iceberg.medical_facility_category mfc
+        on f.ma_cskb =mfc.ma_cskb
+        join iceberg.admision_med m
+        on ac.id = m.admision_checkin_uuid
+        where
+        ac.createdAt between #{from} and #{to}
+        <if test="isByt = 0">
+            and ac.maCskb in
+            <foreach collection="cskbs" item="cskb" open="(" separator="," close=")">
+                #{cskb}
+            </foreach>
+        </if>
+        <if test="level!=''">
+            and mfc.level = #{level}
+        </if>
+        group by
+        formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m'),
+        f.ten_tinh,
+        f.ten_huyen,
+        f.ten_phuong
+    </select>
+
+    <select id="equipment" resultType="com.example.clickhouse.dtos.datas.MedRp">
+        select  formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m') ngayThang,
+        f.ten_tinh tenTinh,
+        f.ten_huyen tenHuyen,
+        f.ten_phuong tenPhuong,
+        count(distinct ac.patient_id) soLuongBnSdDvkt,
+        sum(m.thanhTienBv::NUMERIC) as bntt,
+        sum(m.tBhtt::NUMERIC ) as bhtt,
+        sum(m.tBncct::NUMERIC) as bncct,
+        sum(m.tNguonKhac::NUMERIC ) as nguonkhac
+        from
+        iceberg.admision_checkin  ac
+        join iceberg.facility f
+        on ac.maCskb = f.ma_cskb
+        and f.ma_tinh  is not null
+        join iceberg.medical_facility_category mfc
+        on f.ma_cskb =mfc.ma_cskb
+        join iceberg.admision_equipment m
+        on ac.id = m.admision_checkin_uuid
+        where
+        ac.createdAt between #{from} and #{to}
+        <if test="isByt = 0">
+            and ac.maCskb in
+            <foreach collection="cskbs" item="cskb" open="(" separator="," close=")">
+                #{cskb}
+            </foreach>
+        </if>
+        <if test="level!=''">
+            and mfc.level = #{level}
+        </if>
+        group by
+        formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m'),
+        f.ten_tinh,
+        f.ten_huyen,
+        f.ten_phuong
+    </select>
+
+    <select id="topEquipment" resultType="com.example.clickhouse.dtos.datas.TopEquipmentRp">
+        select  m.maDichVu maDv,
+        m.tenDichVu tenDv,
+        f.ten_tinh tenTinh,
+        f.ten_huyen tenHuyen,
+        f.ten_phuong tenPhuong,
+        count(1) total
+        from
+        iceberg.admision_checkin  ac
+        join iceberg.facility f
+        on ac.maCskb = f.ma_cskb
+        and f.ma_tinh  is not null
+        join iceberg.medical_facility_category mfc
+        on f.ma_cskb =mfc.ma_cskb
+        join iceberg.admision_equipment m
+        on ac.id = m.admision_checkin_uuid
+        where
+        ac.createdAt between #{from} and #{to}
+        and m.maDichVu is not null
+        <if test="isByt = 0">
+            and ac.maCskb in
+            <foreach collection="cskbs" item="cskb" open="(" separator="," close=")">
+                #{cskb}
+            </foreach>
+        </if>
+        <if test="level!=''">
+            and mfc.level = #{level}
+        </if>
+        group by
+        m.maDichVu,
+        m.tenDichVu,
+        f.ten_tinh,
+        f.ten_huyen,
+        f.ten_phuong
+        order by count(1) desc
+    </select>
+
+    <select id="qualitySevice" resultType="com.example.clickhouse.dtos.datas.TopEquipmentRp">
+        select
+        formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m') ngayThang,
+        m.maDichVu maDv,
+        fsc.description  tenDv,
+        f.ten_tinh tenTinh,
+        f.ten_huyen tenHuyen,
+        f.ten_phuong tenPhuong,
+        count(1) total
+        from
+        iceberg.admision_checkin  ac
+        join iceberg.facility f
+        on ac.maCskb = f.ma_cskb
+        and f.ma_tinh  is not null
+        join iceberg.medical_facility_category mfc
+        on f.ma_cskb =mfc.ma_cskb
+        join iceberg.admision_subclinical m
+        on ac.id = m.admision_checkin_uuid
+        join iceberg.facility_service_code fsc
+        on m.maDichVu =fsc.code
+        where
+        ac.createdAt between #{from} and #{to}
+        <if test="isByt = 0">
+            and ac.maCskb in
+            <foreach collection="cskbs" item="cskb" open="(" separator="," close=")">
+                #{cskb}
+            </foreach>
+        </if>
+        <if test="level!=''">
+            and mfc.level = #{level}
+        </if>
+        group by
+        formatDateTime(parseDateTimeBestEffort(ac.createdAt), '%Y-%m'),
+        m.maDichVu,
+        fsc.description,
+        f.ten_tinh,
+        f.ten_huyen,
+        f.ten_phuong
+        order by count(1) desc
+    </select>
+
+</mapper>
