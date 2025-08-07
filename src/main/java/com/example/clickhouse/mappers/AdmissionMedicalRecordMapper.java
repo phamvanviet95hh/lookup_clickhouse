@@ -60,7 +60,7 @@ public interface AdmissionMedicalRecordMapper {
     List<InfoPatient> findDataPatientsCustorm(String maCSKCB, String soCCCD);
 
 
-    List<PrehistoricDtos> findDataPatientsCustormPrehistoric(String maCSKCB, UUID checkInId);
+    List<PrehistoricDtos> findDataPatientsCustormPrehistoric(String maCSKCB, String checkInId);
 
-    List<ExaminationDto> findByDoKhamCustorm(String maCSKCB, UUID checkInId);
+    List<ExaminationDto> findByDoKhamCustorm(String maCSKCB, String checkInId);
 }

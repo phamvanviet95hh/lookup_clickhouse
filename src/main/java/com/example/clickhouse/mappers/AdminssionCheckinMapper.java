@@ -31,7 +31,9 @@ public interface AdminssionCheckinMapper {
 
     List<DataHistoryDto> findByCreatedAt(String maCSKCB, String soCCCD);
 
-    List<Prescription> findByPrescriptionList(String maCskcb, UUID idCheckIn);
+    List<Prescription> findByPrescriptionList(String maCskcb, String idCheckIn);
 
-    List<TreatmentProcessDto> findByTreatmentProcessList(String maCskcb, UUID idCheckIn);
+    List<TreatmentProcessDto> findByTreatmentProcessList(String maCskcb, String idCheckIn);
+
+    List<SurgicalProcedure> findBySurgicalProcedureList(String maCskcb, String idCheckIn);
 }

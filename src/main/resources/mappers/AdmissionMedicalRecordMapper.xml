@@ -377,7 +377,7 @@
 
     <select id="findDataPatientsCustorm" resultType="com.example.clickhouse.dtos.datas.InfoPatient">
         SELECT
-            ac.id AS checkInId,
+            ac.id AS id,
             p.hoTen                AS hoTen,
             p.ngaySinh             AS ngaySinh,
             p.gioiTinh             AS gioiTinh,
@@ -397,9 +397,8 @@
             iceberg.admision_medical_record amr
                 JOIN iceberg.admision_checkin ac ON amr.admision_checkin_uuid = ac.id
                 JOIN iceberg.patient p ON ac.patient_id = p.uuid
-                JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
         WHERE
-            f.ma_cskb = #{maCSKCB}
+            ac.maCskb = #{maCSKCB}
           AND p.soCccd = #{soCCCD}
     </select>
 
@@ -408,8 +407,8 @@
         SELECT
             ac.ngayVao                  AS ngayVao,
             ac.ngayRa                   AS ngayRa,
-            f.maCskb                    AS maCskcb,
-            f.tenCskb                   AS tenCskcb,
+            f.ma_cskb                    AS maCskcb,
+            f.ten_cskb                   AS tenCskcb,
             amr.chanDoanRv            AS chanDoanRv,
             amr.maBenhChinh           AS maBenh
         FROM

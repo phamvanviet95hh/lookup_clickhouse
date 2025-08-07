@@ -3,10 +3,7 @@ package com.example.clickhouse.controllers;
 
 import com.example.clickhouse.bussiness.LookUpBusiness;
 import com.example.clickhouse.common.gloables.Constants;
-import com.example.clickhouse.dtos.requests.DataNhiRq;
-import com.example.clickhouse.dtos.requests.ElectronicHumanHospitalRq;
-import com.example.clickhouse.dtos.requests.ElectronicHumanMaTraCuuRq;
-import com.example.clickhouse.dtos.requests.LookupHistoryKcbRq;
+import com.example.clickhouse.dtos.requests.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,10 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(Constants.Url.LOOKUP )
@@ -62,5 +56,15 @@ public class LookUpControllers {
         return lookUpBusiness.sosuckhoedientu(jwt, rq);
     }
 
+    @PreAuthorize("hasAnyAuthority('ROLE_admin','ROLE_syt','ROLE_byt','ROLE_tw')")
+    @PostMapping(value = "/lichsudongbofiletonghop")
+    public ResponseEntity<?> lichsudongbofiletonghop(@RequestBody LookupHistoryTH rq, @RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "0") int page) throws Exception {
+        return lookUpBusiness.lichsudongbofiletonghop(rq, size, page);
+    }
 
+    @PreAuthorize("hasAnyAuthority('ROLE_admin', 'ROLE_syt','ROLE_byt','ROLE_tw')")
+    @PostMapping(value = "/lichsudongbofilechitiet")
+    public ResponseEntity<?> lichsudongbofilechitiet(@RequestBody LookupHistoryTH rq, @RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "0") int page) throws Exception{
+        return lookUpBusiness.lichsudongbofilechitiet(rq,size,page);
+    }
 }

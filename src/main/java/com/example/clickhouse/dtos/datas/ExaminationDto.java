@@ -13,7 +13,7 @@ import java.util.UUID;
 @Builder
 public class ExaminationDto {
 
-    private UUID idCheckIn;
+    private String idCheckIn;
     private String maCskcb;
     private String tenCskcb;
     private String maNoiDi;

@@ -8,5 +8,5 @@ import java.util.UUID;
 
 @Mapper
 public interface AdmisionMedMapper {
-    List<ClinicalResultsDto> findDataClinicalResultsCustorm(String maCskcb, UUID idCheckIn);
+    List<ClinicalResultsDto> findDataClinicalResultsCustorm(String maCskcb, String idCheckIn);
 }
