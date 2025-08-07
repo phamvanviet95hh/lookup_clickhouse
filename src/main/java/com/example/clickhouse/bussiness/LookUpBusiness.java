@@ -37,8 +37,6 @@ public class LookUpBusiness {
     @Autowired
     private AdminssionCheckinMapper adminssionCheckinMapper;
 
-    @Autowired
-    private LookUpMapper lookUpMapper;
 
     @Autowired
     private ProcessFileMapper processFileMapper;
@@ -52,8 +50,6 @@ public class LookUpBusiness {
     @Autowired
     private AdmissionMedicalRecordMapper admissionMedicalRecordMapper;
 
-    @Autowired
-    private MedicalXmlMapper  medicalXmlMapper;
 
     @Autowired
     private AdmisionMedMapper admisionMedMapper;
@@ -416,8 +412,8 @@ public class LookUpBusiness {
 
         if (!infoPatients.isEmpty()) {
             for (InfoPatient infoPatient: infoPatients){
-                prehistorics = admissionMedicalRecordMapper.findDataPatientsCustormPrehistoric(rq.getMaCSKCB(), infoPatient.getCheckInId());
-                examinationDtos = admissionMedicalRecordMapper.findByDoKhamCustorm(rq.getMaCSKCB(), infoPatient.getCheckInId());
+                prehistorics = admissionMedicalRecordMapper.findDataPatientsCustormPrehistoric(rq.getMaCSKCB(), infoPatient.getId());
+                examinationDtos = admissionMedicalRecordMapper.findByDoKhamCustorm(rq.getMaCSKCB(), infoPatient.getId());
                 if (!examinationDtos.isEmpty()) {
                     for (ExaminationDto item : examinationDtos) {
                         clinicalResultsList = admisionMedMapper.findDataClinicalResultsCustorm(item.getMaCskcb(), item.getIdCheckIn());
@@ -438,9 +434,9 @@ public class LookUpBusiness {
                                 clinicalResultList.add(clinicalResults);
                             }
                         }
-                        prescriptionList = admissionCheckinRepository.findByPrescriptionList(item.getMaCskcb(), item.getIdCheckIn());
+                        prescriptionList = adminssionCheckinMapper.findByPrescriptionList(item.getMaCskcb(), item.getIdCheckIn());
 
-                        treatmentProcessListDtos = admissionCheckinRepository.findByTreatmentProcessList(item.getMaCskcb(), item.getIdCheckIn());
+                        treatmentProcessListDtos = adminssionCheckinMapper.findByTreatmentProcessList(item.getMaCskcb(), item.getIdCheckIn());
 
                         if (!treatmentProcessListDtos.isEmpty()){
                             for (TreatmentProcessDto treatmentProcessDto: treatmentProcessListDtos){
@@ -456,8 +452,10 @@ public class LookUpBusiness {
                                 treatmentProcessList.add(treatmentProcess);
                             }
                         }
-                        String tenNoiDen = getNameFacility(item.getMaNoiDen());
-                        String tenNoiDi = getNameFacility(item.getMaNoiDi());
+                        String tenNoiDen = admissionMedicalRecordMapper.getNoiDen(item.getMaNoiDen()) != null ?
+                                admissionMedicalRecordMapper.getNoiDen(item.getMaNoiDen()) : "Không có dữ liệu";
+                        String tenNoiDi = admissionMedicalRecordMapper.getNoiDi(item.getMaNoiDi()) != null ?
+                                admissionMedicalRecordMapper.getNoiDi(item.getMaNoiDi()) : "Không có dữ liệu";
                         Examination examination = Examination.builder()
                                 .ma_cskcb(item.getMaCskcb())
                                 .ten_cskcb(item.getTenCskcb())
@@ -528,41 +526,7 @@ public class LookUpBusiness {
     }
 
 
-    public ResponseEntity<?> lichsudongbofiletonghop(LookupHistoryTH rq, int size, int page) {
-        if (rq.getTuNgay().isEmpty()) {
-            return ResponseEntity.ok(this.reponseError("Không để trống ngày bắt đầu", null));
-        }
-        if (rq.getDenNgay().isEmpty()) {
-            return ResponseEntity.ok(this.reponseError("Không để trống ngày kết thúc", null));
-        }
 
-        LocalDateTime startDate = convertToStartOfDay(rq.getTuNgay());
-        LocalDateTime endDate = convertToEndOfDay(rq.getDenNgay());
-
-
-        Pageable pageable = PageRequest.of(page, size);
-        int offset = page * size;
-        RowBounds rowBounds = new RowBounds(offset, size);
-
-        List<LookupHistoryResponseTH> lookupHistoryResponseTHList = medicalXmlMapper.findByCreatedAt(
-                startDate, endDate, rq.getLoaiHoSo(), rowBounds
-        );
-
-        Long totalRecord = medicalXmlMapper.findByUpdatedAt(startDate, endDate, rq.getLoaiHoSo());
-
-
-        Page<LookupHistoryResponseTH> pageResult = new PageImpl<>(
-                lookupHistoryResponseTHList, pageable, totalRecord != null ? totalRecord : 0
-        );
-
-        BaseReposeLookupTH<LookupHistoryResponseTH> baseReposeLookup = BaseReposeLookupTH.<LookupHistoryResponseTH>builder()
-                .statusCode(1)
-                .totalRecord(totalRecord != null ? totalRecord : 0)
-                .data(pageResult.getContent())
-                .build();
-
-        return ResponseEntity.ok(baseReposeLookup);
-    }
 
     public static LocalDateTime convertToStartOfDay(String dateStr) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -576,40 +540,7 @@ public class LookUpBusiness {
         return localDate.atTime(23, 59, 59);
     }
 
-    public ResponseEntity<?> lichsudongbofilechitiet(LookupHistoryTH rq, int size, int page) {
 
-        if (rq.getTuNgay().isEmpty()) {
-            return ResponseEntity.ok(this.reponseError("Không để trống ngày bắt đầu", null));
-        }
-        if (rq.getDenNgay().isEmpty()) {
-            return ResponseEntity.ok(this.reponseError("Không để trống ngày kết thúc", null));
-        }
-
-        LocalDateTime startDate = convertToStartOfDay(rq.getTuNgay());
-        LocalDateTime endDate = convertToEndOfDay(rq.getDenNgay());
-
-        int offset = page * size;
-        RowBounds rowBounds = new RowBounds(offset, size);
-
-        List<LookupHistoryResponseDetail> lookupHistoryResponseTHList = medicalXmlMapper.findByMaLk(
-                startDate, endDate, rq.getLoaiHoSo(), rowBounds
-        );
-
-        Long totalRecord = medicalXmlMapper.findByUpdatedAt(startDate, endDate, rq.getLoaiHoSo());
-
-        Pageable pageable = PageRequest.of(page, size);
-        Page<LookupHistoryResponseDetail> pageResult = new PageImpl<>(
-                lookupHistoryResponseTHList, pageable, totalRecord != null ? totalRecord : 0
-        );
-
-        BaseReposeLookupTH<LookupHistoryResponseDetail> baseReposeLookup = BaseReposeLookupTH.<LookupHistoryResponseDetail>builder()
-                .statusCode(1)
-                .totalRecord(totalRecord != null ? totalRecord : 0)
-                .data(pageResult.getContent())
-                .build();
-
-        return ResponseEntity.ok(baseReposeLookup);
-    }
 
 
 }

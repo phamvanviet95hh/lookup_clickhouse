@@ -56,15 +56,4 @@ public class LookUpControllers {
         return lookUpBusiness.sosuckhoedientu(jwt, rq);
     }
 
-    @PreAuthorize("hasAnyAuthority('ROLE_admin','ROLE_syt','ROLE_byt','ROLE_tw')")
-    @PostMapping(value = "/lichsudongbofiletonghop")
-    public ResponseEntity<?> lichsudongbofiletonghop(@RequestBody LookupHistoryTH rq, @RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "0") int page) throws Exception {
-        return lookUpBusiness.lichsudongbofiletonghop(rq, size, page);
-    }
-
-    @PreAuthorize("hasAnyAuthority('ROLE_admin', 'ROLE_syt','ROLE_byt','ROLE_tw')")
-    @PostMapping(value = "/lichsudongbofilechitiet")
-    public ResponseEntity<?> lichsudongbofilechitiet(@RequestBody LookupHistoryTH rq, @RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "0") int page) throws Exception{
-        return lookUpBusiness.lichsudongbofilechitiet(rq,size,page);
-    }
 }
