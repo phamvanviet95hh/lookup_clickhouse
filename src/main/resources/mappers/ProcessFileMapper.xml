@@ -15,12 +15,13 @@
     <select id="findByUnitNameAndFileName" resultType="com.example.clickhouse.dtos.datas.ProcessedFiles">
 
         SELECT
-            pf.file_name as fileName,
-            pf.directory as directory
-            FROM iceberg.processed_files as pf
+            pf.file_name AS fileName,
+            pf.directory AS directory
+        FROM iceberg.processed_files AS pf
         WHERE
-            pf.unit_name = #{maCSKCB} AND pf.file_name LIKE CONCAT('%', #{maTraCuu}, '%')
-
+            pf.unit_name = #{maCSKCB}
+            AND pf.file_name ILIKE '%${maTraCuu}%' -- nếu case-insensitive là cần thiết
+        LIMIT 1
     </select>
 
 </mapper>

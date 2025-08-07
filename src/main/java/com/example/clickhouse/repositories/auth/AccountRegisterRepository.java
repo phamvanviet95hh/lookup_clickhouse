@@ -1,4 +1,4 @@
-package com.example.clickhouse.repositories;
+package com.example.clickhouse.repositories.auth;
 
 
 import com.example.clickhouse.entitys.auth.AccountRegister;

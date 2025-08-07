@@ -5,12 +5,11 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
-import org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -26,53 +25,54 @@ import java.util.Map;
 
 @Configuration
 @EnableTransactionManagement
+@ConditionalOnProperty(name = "spring.datasource.platform.enabled", havingValue = "true", matchIfMissing = false)
 @EnableJpaRepositories(
-        entityManagerFactoryRef = "authEntityManagerFactory",
-        transactionManagerRef = "authTransactionManager",
-        basePackages = {"com.example.clickhouse.repositories.auth"})
-public class AuthDatasourceConfiguration {
+        entityManagerFactoryRef = "platformEntityManagerFactory",
+        transactionManagerRef = "platformTransactionManager",
+        basePackages = { "com.example.clickhouse.repositories.platform" })
+public class PlatformDatasourceConfiguration {
 
-    @Primary
-    @Bean(name="authProperties")
-    @ConfigurationProperties("spring.datasource.auth")
+
+    @Bean(name="platformProperties")
+    @ConfigurationProperties("spring.datasource.platform")
     public DataSourceProperties dataSourceProperties() {
 
         return new DataSourceProperties();
     }
 
-    @Primary
-    @Bean(name="authDatasource")
-    @ConfigurationProperties(prefix = "spring.datasource.auth")
-    public DataSource datasource(@Qualifier("authProperties") DataSourceProperties properties){
+
+    @Bean(name="platformDatasource")
+    @ConfigurationProperties(prefix = "spring.datasource.platform")
+    public DataSource datasource(@Qualifier("platformProperties") DataSourceProperties properties){
 
         return properties.initializeDataSourceBuilder().build();
     }
 
-    @Primary
-    @Bean(name="authEntityManagerFactory")
+
+    @Bean(name="platformEntityManagerFactory")
     public LocalContainerEntityManagerFactoryBean entityManagerFactoryBean
             (EntityManagerFactoryBuilder builder,
-             @Qualifier("authDatasource") DataSource dataSource){
+             @Qualifier("platformDatasource") DataSource dataSource){
 
         return builder.dataSource(dataSource)
-                .packages("com.example.clickhouse.entitys.auth")
-                .persistenceUnit("auth")
+                .packages("com.example.clickhouse.entitys.platform")
+                .persistenceUnit("platform")
                 .properties(jpaProperties())
                 .build();
     }
 
-    @Primary
-    @Bean(name = "authTransactionManager")
+
+    @Bean(name = "platformTransactionManager")
     @ConfigurationProperties("spring.jpa")
     public PlatformTransactionManager transactionManager(
-            @Qualifier("authEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
+            @Qualifier("platformEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
 
         return new JpaTransactionManager(entityManagerFactory);
     }
 
-    @Primary
-    @Bean(name = "authSqlSessionFactory")
-    public SqlSessionFactory secondarySqlSessionFactory(@Qualifier("authDatasource") DataSource dataSource) throws Exception {
+
+    @Bean(name = "platformSqlSessionFactory")
+    public SqlSessionFactory secondarySqlSessionFactory(@Qualifier("platformDatasource") DataSource dataSource) throws Exception {
         SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();
         factoryBean.setDataSource(dataSource);
 //        factoryBean.setMapperLocations(
@@ -81,9 +81,9 @@ public class AuthDatasourceConfiguration {
         return factoryBean.getObject();
     }
 
-    @Primary
-    @Bean(name = "authSqlSessionTemplate")
-    public SqlSessionTemplate secondarySqlSessionTemplate(@Qualifier("authSqlSessionFactory") SqlSessionFactory sqlSessionFactory) {
+
+    @Bean(name = "platformSqlSessionTemplate")
+    public SqlSessionTemplate secondarySqlSessionTemplate(@Qualifier("platformSqlSessionFactory") SqlSessionFactory sqlSessionFactory) {
         return new SqlSessionTemplate(sqlSessionFactory);
     }
 

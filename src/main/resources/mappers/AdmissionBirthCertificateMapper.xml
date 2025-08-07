@@ -5,27 +5,28 @@
 
     <select id="findBySoSucKhoeSoSinh" resultType="com.example.clickhouse.models.DataNhi">
         SELECT
-            p.hoTen as ho_ten,
-            p.ngaySinh as ngay_sinh,
-            p.gioiTinh as gioi_tinh,
-            p.maDanToc as ma_dantoc,
-            p.maQuocTich as ma_quoctich,
-            p.maNgheNghiep as ma_nghe_nghiep,
-            p.soCccd as so_cccd,
-            ac.maTheBhyt as ma_the_bhyt,
-            ac.maDkbd as ma_dkbd,
-            p.dienThoai as dien_thoai,
-            p.diaChi as dia_chi,
-            p.maTinhCuTru as matinh_cu_tru,
-            p.maHuyenCuTru as mahuyen_cu_tru,
-            p.maXaCuTru as maxa_cu_tru,
-            abc.soCccdNnd as so_cccd_nguoi_giam_ho
-        FROM
-            iceberg.admision_birth_certificate abc
-        inner join iceberg.admision_checkin ac on abc.admision_checkin_uuid = ac.id
-        inner join iceberg.patient p on ac.patient_id = p.uuid
-        inner join iceberg.facility f ON ac.maCskb = f.ma_cskb
-        WHERE f.ma_cskb = #{maCskcb} and abc.soCccdNnd = #{soCccd}
+            p.hoTen AS ho_ten,
+            p.ngaySinh AS ngay_sinh,
+            p.gioiTinh AS gioi_tinh,
+            p.maDanToc AS ma_dantoc,
+            p.maQuocTich AS ma_quoctich,
+            p.maNgheNghiep AS ma_nghe_nghiep,
+            p.soCccd AS so_cccd,
+            ac.maTheBhyt AS ma_the_bhyt,
+            ac.maDkbd AS ma_dkbd,
+            p.dienThoai AS dien_thoai,
+            p.diaChi AS dia_chi,
+            p.maTinhCuTru AS matinh_cu_tru,
+            p.maHuyenCuTru AS mahuyen_cu_tru,
+            p.maXaCuTru AS maxa_cu_tru,
+            abc.soCccdNnd AS so_cccd_nguoi_giam_ho
+        FROM iceberg.admision_birth_certificate abc
+            ANY INNER JOIN iceberg.admision_checkin ac ON abc.admision_checkin_uuid = ac.id
+            ANY INNER JOIN iceberg.patient p ON ac.patient_id = p.uuid
+            ANY INNER JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
+        WHERE abc.soCccdNnd = #{soCccd}
+          AND f.ma_cskb = #{maCskcb}
+            LIMIT 1
     </select>
 
 

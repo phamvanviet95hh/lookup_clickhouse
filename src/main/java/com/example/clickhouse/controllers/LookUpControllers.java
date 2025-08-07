@@ -1,6 +1,7 @@
 package com.example.clickhouse.controllers;
 
 
+import com.example.clickhouse.bussiness.HospitalLookupBussiness;
 import com.example.clickhouse.bussiness.LookUpBusiness;
 import com.example.clickhouse.common.gloables.Constants;
 import com.example.clickhouse.dtos.requests.*;
@@ -16,6 +17,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(Constants.Url.LOOKUP )
 public class LookUpControllers {
+
+    @Autowired
+    private HospitalLookupBussiness hospitalLookupBussiness;
 
     @Autowired
     private LookUpBusiness lookUpBusiness;
@@ -54,6 +58,22 @@ public class LookUpControllers {
     public ResponseEntity<?> sosuckhoedientu(@AuthenticationPrincipal Jwt jwt,@RequestBody LookupHistoryKcbRq rq) throws Exception {
 
         return lookUpBusiness.sosuckhoedientu(jwt, rq);
+    }
+
+    @PreAuthorize("hasAnyAuthority('ROLE_admin','ROLE_syt', 'ROLE_byt', 'ROLE_tw')")
+    @PostMapping(value = "/lichsudongbofiletonghop")
+    public ResponseEntity<?> lichsudongbofiletonghop(@RequestBody LookupHistoryTH rq, @RequestParam("page") int page, @RequestParam("size") int size) throws Exception {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        System.out.println(authentication);
+        return hospitalLookupBussiness.lichsudongbofiletonghop(rq, size, page);
+    }
+
+
+    @PreAuthorize("hasAnyAuthority('ROLE_admin','ROLE_syt', 'ROLE_byt', 'ROLE_tw')")
+    @PostMapping(value = "/lichsudongbofilechitiet")
+    public ResponseEntity<?> lichsudongbofilechitiet(@RequestBody LookupHistoryTH rq, @RequestParam("page") int page, @RequestParam("size") int size) throws Exception {
+        return hospitalLookupBussiness.lichsudongbofilechitiet(rq, size, page);
     }
 
 }

@@ -1,4 +1,4 @@
-package com.example.clickhouse.entitys.auth;
+package com.example.clickhouse.entitys.platform;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

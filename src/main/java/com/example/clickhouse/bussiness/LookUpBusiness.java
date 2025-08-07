@@ -4,19 +4,13 @@ package com.example.clickhouse.bussiness;
 import com.example.clickhouse.dtos.datas.*;
 import com.example.clickhouse.dtos.reponses.*;
 import com.example.clickhouse.dtos.requests.*;
-import com.example.clickhouse.entitys.auth.MedicalXml;
+import com.example.clickhouse.entitys.platform.MedicalXml;
 import com.example.clickhouse.mappers.*;
 import com.example.clickhouse.models.DataNhi;
-import com.example.clickhouse.repositories.AccountRegisterRepository;
-import com.example.clickhouse.repositories.MedicalXmlRepository;
+import com.example.clickhouse.repositories.auth.AccountRegisterRepository;
+import com.example.clickhouse.repositories.platform.MedicalXmlRepository2;
 import com.example.clickhouse.services.MinioService;
-import com.google.j2objc.annotations.AutoreleasePool;
-import org.apache.ibatis.session.RowBounds;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,7 +36,7 @@ public class LookUpBusiness {
     private ProcessFileMapper processFileMapper;
 
     @Autowired
-    private MedicalXmlRepository medicalXmlRepository;
+    private MedicalXmlRepository2 medicalXmlRepository;
 
     @Autowired
     private AdmissionBirthCertificateMapper admissionBirthCertificateMapper;

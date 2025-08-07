@@ -2,7 +2,7 @@ package com.example.clickhouse.mappers;
 
 import com.example.clickhouse.dtos.reponses.LookupHistoryResponseDetail;
 import com.example.clickhouse.dtos.reponses.LookupHistoryResponseTH;
-import com.example.clickhouse.entitys.auth.MedicalXml;
+import com.example.clickhouse.entitys.platform.MedicalXml;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.session.RowBounds;
