@@ -432,10 +432,8 @@ public class LookUpBusiness {
                                 clinicalResultList.add(clinicalResults);
                             }
                         }
-                        prescriptionList = admissionCheckinRepository.findByPrescriptionList(item.getMaCskcb(), item.getIdCheckIn());
-
-                        treatmentProcessListDtos = admissionCheckinRepository.findByTreatmentProcessList(item.getMaCskcb(), item.getIdCheckIn());
-
+                        prescriptionList = adminssionCheckinMapper.findByPrescriptionList(item.getMaCskcb(), item.getIdCheckIn());
+                        treatmentProcessListDtos = adminssionCheckinMapper.findByTreatmentProcessList(item.getMaCskcb(), item.getIdCheckIn());
                         if (!treatmentProcessListDtos.isEmpty()){
                             for (TreatmentProcessDto treatmentProcessDto: treatmentProcessListDtos){
                                 TreatmentProcess treatmentProcess = TreatmentProcess.builder()
@@ -450,8 +448,10 @@ public class LookUpBusiness {
                                 treatmentProcessList.add(treatmentProcess);
                             }
                         }
-                        String tenNoiDen = getNameFacility(item.getMaNoiDen());
-                        String tenNoiDi = getNameFacility(item.getMaNoiDi());
+
+                        String tenNoiDen = item.getMaNoiDen() == null ? null : admissionMedicalRecordMapper.getNoiDen(item.getMaNoiDen());
+                        String tenNoiDi = item.getMaNoiDi() == null ? null : admissionMedicalRecordMapper.getNoiDi(item.getMaNoiDi());
+
                         Examination examination = Examination.builder()
                                 .ma_cskcb(item.getMaCskcb())
                                 .ten_cskcb(item.getTenCskcb())
@@ -520,4 +520,7 @@ public class LookUpBusiness {
         return  ResponseEntity.ok(baseReposeLookup);
 
     }
+
+
+
 }

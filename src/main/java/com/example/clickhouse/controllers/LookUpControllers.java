@@ -55,7 +55,7 @@ public class LookUpControllers {
     }
 
 
-    @PreAuthorize("hasAnyAuthority('admin','syt', 'byt', 'tw')")
+    @PreAuthorize("hasAnyAuthority('ROLE_admin','ROLE_syt', 'ROLE_byt', 'ROLE_tw')")
     @PostMapping(value = "/sosuckhoedientu")
     public ResponseEntity<?> sosuckhoedientu(@AuthenticationPrincipal Jwt jwt,@RequestBody LookupHistoryKcbRq rq) throws Exception {
 

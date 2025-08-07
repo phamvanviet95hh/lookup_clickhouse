@@ -3,5 +3,20 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.clickhouse.mappers.AdmisionMedMapper">
 
+    <select id="" resultType="" >
+
+        SELECT
+            aa.maDichVu AS maDichVu,
+            aa.maChiSo AS maChiSo,
+            aa.tenChiSo AS tenChiSo,
+            aa.giaTri AS giaTri,
+            aa.ketLuan AS ketLuan,
+            aa.ngayKq AS ngayKq
+        FROM iceberg.admision_checkin ac
+                 INNER JOIN iceberg.admision_subclinical aa ON aa.admision_checkin_uuid = ac.id
+        WHERE ac.maCskb = #{maCskcb}
+          AND ac.id = #{idCheckIn}
+
+    </select>
 
 </mapper>

@@ -392,7 +392,7 @@
             p.maTinhCuTru         AS matinhCuTru,
             p.maHuyenCuTru        AS mahuyenCuTru,
             p.maXaCuTru           AS maxaCuTru,
-            ac.nguoiGiamHo        AS nguoiGiamHo
+            amr.nguoiGiamHo        AS nguoiGiamHo
         FROM
             iceberg.admision_medical_record amr
                 JOIN iceberg.admision_checkin ac ON amr.admision_checkin_uuid = ac.id
@@ -414,11 +414,12 @@
             amr.maBenhChinh           AS maBenh
         FROM
             iceberg.admision_medical_record amr
-                JOIN iceberg.admision_checkin ac ON amr.admision_checkin_uuid = ac.id
-                JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
+            INNER JOIN iceberg.admision_checkin ac ON amr.admision_checkin_uuid = ac.id
+            INNER JOIN iceberg.patient p ON ac.patient_id = p.uuid
+            INNER JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
         WHERE
             f.ma_cskb = #{maCSKCB}
-          AND ac.id = #{checkInId}
+          AND p.soCccd = #{checkInId}
     </select>
 
     <select id="findByDoKhamCustorm" resultType="com.example.clickhouse.dtos.datas.ExaminationDto">
@@ -439,11 +440,14 @@
             amr.ghiChu                        AS ghiChu
         FROM
             iceberg.admision_medical_record amr
-                JOIN iceberg.admision_checkin ac ON amr.admision_checkin_uuid = ac.id
-                JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
+            INNER JOIN iceberg.admision_checkin ac ON amr.admision_checkin_uuid = ac.id
+            INNER JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
+            INNER JOIN iceberg.patient p ON ac.patient_id = p.uuid
         WHERE
             f.ma_cskb = #{maCSKCB}
-          AND ac.id = #{checkInId}
+          AND p.soCccd = #{checkInId}
     </select>
+
+
 
 </mapper>

@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.UUID;
 
 @Mapper
 public interface AdminssionCheckinMapper {
@@ -29,4 +30,8 @@ public interface AdminssionCheckinMapper {
     List<QuatrinhDieutri> findByQuaTrinhDieuTri(String soCccdNnd);
 
     List<DataHistoryDto> findByCreatedAt(String maCSKCB, String soCCCD);
+
+    List<Prescription> findByPrescriptionList(String maCskcb, UUID idCheckIn);
+
+    List<TreatmentProcessDto> findByTreatmentProcessList(String maCskcb, UUID idCheckIn);
 }

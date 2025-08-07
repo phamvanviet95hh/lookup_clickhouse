@@ -5,13 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class ExaminationDto {
 
-    private Long idCheckIn;
+    private UUID idCheckIn;
     private String maCskcb;
     private String tenCskcb;
     private String maNoiDi;
