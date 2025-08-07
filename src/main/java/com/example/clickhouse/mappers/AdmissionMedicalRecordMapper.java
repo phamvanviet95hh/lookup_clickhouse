@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.UUID;
 
 @Mapper
 public interface AdmissionMedicalRecordMapper {
@@ -54,4 +55,12 @@ public interface AdmissionMedicalRecordMapper {
 
     long countAppointmentLetter(String namQt, String soCCCD, String maCskcb, String ngayHenTu, String ngayHenDen, String chanDoan);
 
+    Cskcb getCskcbFacility(String maCskcb);
+
+    List<InfoPatient> findDataPatientsCustorm(String maCSKCB, String soCCCD);
+
+
+    List<PrehistoricDtos> findDataPatientsCustormPrehistoric(String maCSKCB, String checkInId);
+
+    List<ExaminationDto> findByDoKhamCustorm(String maCSKCB, String checkInId);
 }

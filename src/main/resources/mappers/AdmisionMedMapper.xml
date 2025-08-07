@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.clickhouse.mappers.AdmisionMedMapper">
+
+    <select id="findDataClinicalResultsCustorm" resultType="com.example.clickhouse.dtos.datas.ClinicalResultsDto" >
+
+        SELECT
+            aa.maDichVu AS ma_dich_vu,
+            aa.maChiSo AS ma_chi_so,
+            aa.tenChiSo AS ten_chi_so,
+            aa.giaTri AS gia_tri,
+            aa.ketLuan AS ket_luan,
+            aa.ngayKq AS ngay_kq
+        FROM iceberg.admision_checkin ac
+                 INNER JOIN iceberg.admision_subclinical aa ON aa.admision_checkin_uuid = ac.id
+        WHERE ac.maCskb = #{maCskcb}
+          AND ac.id = #{idCheckIn}
+
+    </select>
+
+</mapper>

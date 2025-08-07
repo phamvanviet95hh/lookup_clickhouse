@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.clickhouse.mappers.AdminssionCheckinMapper">
+
+    <select id="findMaTinhByMalk" resultType="string">
+        SELECT
+            f.ma_tinh
+        from
+            iceberg.admision_checkin ac
+        inner join
+            iceberg.facility f on ac.maCskb = f.ma_cskb
+        WHERE ac.maLk = #{maLk}
+    </select>
+
+    <select id="findMaCskcbByMaLk" resultType="string">
+        SELECT
+            f.ma_cskb
+        from
+            iceberg.admision_checkin ac
+        inner join
+            iceberg.facility f on ac.maCskb = f.ma_cskb
+        WHERE ac.maLk = #{maLk}
+    </select>
+
+
+    <select id="findMaTinhByCccd" resultType="string">
+        SELECT
+            f.ma_tinh
+        from
+            iceberg.admision_checkin ac
+                inner join
+            iceberg.facility f on ac.maCskb = f.ma_cskb
+                inner join
+            iceberg.patient as p on p.uuid = ac.patient_id
+        WHERE p.soCccd = #{soCccd}
+    </select>
+
+
+    <select id="findMaCskcbByCccd" resultType="string">
+        SELECT
+            f.ma_cskb
+        from
+            iceberg.admision_checkin ac
+                inner join
+            iceberg.facility f on ac.maCskb = f.ma_cskb
+                inner join
+            iceberg.patient as p on p.uuid = ac.patient_id
+        WHERE p.soCccd = #{soCccd}
+    </select>
+
+
+    <select id="findByTienSu" resultType="com.example.clickhouse.dtos.datas.TienSu">
+        SELECT
+            ac.ngayVao as ngay_vao,
+            ac.ngayRa as ngay_ra,
+            f.ma_cskb as ma_cskcb,
+            f.ten_cskb as ten_cskcb,
+            am.chanDoanRv as chan_doan_rv,
+            am.maBenhChinh as ma_benh
+        FROM
+            iceberg.admision_medical_record am
+                JOIN iceberg.admision_checkin ac ON am.admision_checkin_uuid = ac.id
+                JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
+                JOIN iceberg.admision_birth_certificate abc ON abc.admision_checkin_uuid = ac.id
+        WHERE
+            abc.soCccdNnd = #{soCccdNnd}
+    </select>
+
+    <select id="findByDotKham" resultType="com.example.clickhouse.dtos.datas.DotKham">
+        SELECT
+            f.ma_cskb AS ma_cskcb,
+            ac.maNoiDi AS ma_noi_di,
+            ac.lyDoVv AS ly_do_vv,
+            amr.maLoaiKcb AS ma_loai_kcb,
+            ac.ngayVao AS ngay_vao,
+            ac.ngayRa AS ngay_ra,
+            amr.ketQuaDt AS ket_qua_dtri,
+            amr.maLoaiRv AS ma_loai_rv,
+            ac.maNoiDen AS ma_noi_den,
+            amr.chanDoanRv AS chan_doan_rv,
+            amr.maBenhChinh AS ma_benh,
+            abc.soCccdNnd AS so_cccd_nnd,
+            amr.ghiChu AS ghi_chu
+        FROM
+            iceberg.admision_medical_record amr
+                JOIN iceberg.admision_checkin ac ON amr.admision_checkin_uuid = ac.id
+                JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
+                JOIN iceberg.admision_birth_certificate abc ON abc.admision_checkin_uuid = ac.id
+        WHERE
+            abc.soCccdNnd = #{soCccdNnd}
+    </select>
+
+
+    <select id="findByKqCanLamSang" resultType="com.example.clickhouse.dtos.datas.KqCanLamSang">
+        SELECT
+            asub.maDichVu AS ma_dich_vu,
+            asub.maChiSo AS ma_chi_so,
+            asub.tenChiSo AS ten_chi_so,
+            asub.giaTri AS gia_tri,
+            asub.ngayKq AS ngay_kq,
+            asub.ketLuan AS ket_luan
+        FROM
+            iceberg.admision_birth_certificate amr
+                INNER JOIN iceberg.admision_subclinical asub ON asub.admision_checkin_uuid = amr.admision_checkin_uuid
+        WHERE
+            amr.soCccdNnd = #{soCccdNnd}
+        GROUP BY
+            asub.maDichVu,
+            asub.maChiSo,
+            asub.tenChiSo,
+            asub.giaTri,
+            asub.ngayKq,
+            asub.ketLuan
+    </select>
+
+
+    <select id="selectDonthuocDakeBySoCccd" resultType="com.example.clickhouse.dtos.datas.DonthuocDake">
+        SELECT
+            am.maThuoc AS ma_thuoc,
+            am.tenThuoc AS ten_thuoc,
+            am.donViTinh AS don_vi_tinh,
+            am.soLuong AS so_luong,
+            am.hamLuong AS ham_luong,
+            am.duongDung AS duong_dung,
+            am.cachDung AS cach_dung,
+            am.lieuDung AS lieu_dung
+        FROM
+            iceberg.admision_birth_certificate amr
+                INNER JOIN iceberg.admision_med am ON am.admision_checkin_uuid = amr.admision_checkin_uuid
+        WHERE
+            amr.soCccdNnd = #{soCccdNnd}
+    </select>
+
+
+    <select id="findByPhauThuatThuThuat" resultType="com.example.clickhouse.dtos.datas.PhauthuatThuthuat">
+        SELECT
+            amr.maPtttQt AS ma_pttt_qt
+        FROM
+            iceberg.admision_medical_record amr
+                INNER JOIN iceberg.admision_birth_certificate abc ON abc.admision_checkin_uuid = amr.admision_checkin_uuid
+        WHERE
+            abc.soCccdNnd = #{soCccdNnd}
+    </select>
+
+
+    <select id="findByQuaTrinhDieuTri" resultType="com.example.clickhouse.dtos.datas.QuatrinhDieutri">
+        SELECT
+            amr.qtBenhLy AS qt_benhly,
+            amr.tomTatKq AS tomtat_kq,
+            amr.ppDieuTri AS pp_dieutri,
+            amr.ngayTaiKham AS ngay_tai_kham
+        FROM
+            iceberg.admision_medical_record amr
+                INNER JOIN iceberg.admision_birth_certificate abc ON abc.admision_checkin_uuid = amr.admision_checkin_uuid
+        WHERE
+            abc.soCccdNnd = #{soCccdNnd}
+    </select>
+
+
+    <select id="findByDonThuocDaKe" resultType="com.example.clickhouse.dtos.datas.DonthuocDake">
+        SELECT
+            am.maThuoc     AS ma_thuoc,
+            am.tenThuoc    AS ten_thuoc,
+            am.donViTinh  AS don_vi_tinh,
+            am.soLuong     AS so_luong,
+            am.hamLuong    AS ham_luong,
+            am.duongDung   AS duong_dung,
+            am.cachDung    AS cach_dung,
+            am.lieuDung    AS lieu_dung
+        FROM
+            iceberg.admision_birth_certificate amr
+                INNER JOIN iceberg.admision_med am ON am.admision_checkin_uuid = amr.admision_checkin_uuid
+        WHERE
+            amr.soCccdNnd = #{soCccdNnd}
+    </select>
+
+
+    <select id="findByCreatedAt" resultType="com.example.clickhouse.dtos.datas.DataHistoryDto">
+        SELECT
+            f.ma_cskb    AS maCSKCB,
+            f.ten_cskb  AS tenCSKCB,
+            ac.maLk     AS maLK,
+            ac.ngayRa   AS ngayRaVien
+        FROM
+            iceberg.admision_checkin ac
+                JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
+                JOIN iceberg.patient p ON ac.patient_id = p.uuid
+        WHERE
+            f.ma_cskb = #{maCSKCB}
+          AND p.soCccd = #{soCCCD}
+    </select>
+
+
+    <select id="findByPrescriptionList" resultType="com.example.clickhouse.dtos.datas.Prescription">
+
+        <!-- This is a placeholder for any additional queries you may want to add in the future -->
+        SELECT
+        am.maThuoc AS ma_thuoc,
+        am.hamLuong AS ten_thuoc_ham_luong,
+        am.donViTinh AS don_vi_tinh,
+        am.duongDung AS duong_dung,
+        am.soLuong AS so_luong,
+        am.lieuDung AS lieu_dung,
+        am.cachDung AS cach_dung
+        FROM iceberg.admision_checkin ac
+        INNER JOIN iceberg.admision_med am ON am.admision_checkin_uuid = ac.id
+        WHERE ac.id = #{idCheckIn}
+        AND ac.maCskb = #{maCskcb}
+
+    </select>
+
+    <select id="findByTreatmentProcessList" resultType="com.example.clickhouse.dtos.datas.TreatmentProcessDto">
+
+        SELECT
+            ar.qtBenhly AS qt_benhly,
+            ar.tomtatKq AS tomtat_kq,
+            ar.ppDieuTri AS pp_dieutri
+        FROM iceberg.admision_checkin ac
+                 INNER JOIN iceberg.admision_referral ar ON ar.admision_checkin_uuid = ac.id
+        WHERE ac.id = #{idCheckIn}
+          AND ac.maCskb = #{maCskcb}
+
+    </select>
+
+
+</mapper>
