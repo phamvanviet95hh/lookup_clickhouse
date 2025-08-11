@@ -1,4 +1,4 @@
-package com.example.clickhouse.controllers;
+package com.example.clickhouse.common.config.controllers;
 
 
 import com.example.clickhouse.bussiness.HospitalLookupBussiness;

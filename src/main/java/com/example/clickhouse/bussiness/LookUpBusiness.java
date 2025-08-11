@@ -403,11 +403,11 @@ public class LookUpBusiness {
         }
 
         List<InfoPatient> infoPatients = admissionMedicalRecordMapper.findDataPatientsCustorm(rq.getMaCSKCB(), rq.getSoCCCD());
-
+        System.out.println("infoPatients = " + infoPatients);
         if (!infoPatients.isEmpty()) {
             for (InfoPatient infoPatient: infoPatients){
-                prehistorics = admissionMedicalRecordMapper.findDataPatientsCustormPrehistoric(rq.getMaCSKCB(), infoPatient.getId());
-                examinationDtos = admissionMedicalRecordMapper.findByDoKhamCustorm(rq.getMaCSKCB(), infoPatient.getId());
+                prehistorics = admissionMedicalRecordMapper.findDataPatientsCustormPrehistoric(rq.getMaCSKCB(), infoPatient.getAdmissionCheckinUuid());
+                examinationDtos = admissionMedicalRecordMapper.findByDoKhamCustorm(rq.getMaCSKCB(), infoPatient.getAdmissionCheckinUuid());
                 if (!examinationDtos.isEmpty()) {
                     for (ExaminationDto item : examinationDtos) {
                         clinicalResultsList = admisionMedMapper.findDataClinicalResultsCustorm(item.getMaCskcb(), item.getIdCheckIn());
@@ -488,6 +488,7 @@ public class LookUpBusiness {
                     prehistoricsList.add(prehistoric);
                 }
                 DataPatient dataPatient = DataPatient.builder()
+                        .uuid(infoPatient.getAdmissionCheckinUuid())
                         .ho_ten(infoPatient.getHoTen())
                         .ngay_sinh(infoPatient.getNgaySinh())
                         .gioi_tinh(infoPatient.getGioiTinh())

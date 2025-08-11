@@ -1,4 +1,4 @@
-package com.example.clickhouse.controllers;
+package com.example.clickhouse.common.config.controllers;
 
 import com.example.clickhouse.models.Patient;
 import com.example.clickhouse.services.PatientServices;

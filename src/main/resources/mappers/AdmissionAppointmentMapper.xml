@@ -234,7 +234,7 @@
             ac.maLk = #{maLk}
         AND
             ar.soChuyentuyen = #{soGiayChuyenTuyen}
-
+        LiMIT 1
     </select>
 
 

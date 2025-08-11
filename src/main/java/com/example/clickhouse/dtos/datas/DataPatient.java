@@ -14,6 +14,7 @@ import java.util.List;
 
 public class DataPatient {
 
+    private String uuid;
     private String ho_ten;
     private String ngay_sinh;
     private String gioi_tinh;

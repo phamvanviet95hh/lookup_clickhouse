@@ -377,7 +377,7 @@
 
     <select id="findDataPatientsCustorm" resultType="com.example.clickhouse.dtos.datas.InfoPatient">
         SELECT
-            ac.id AS id,
+            ac.id                  AS admissionCheckinUuid,
             p.hoTen                AS hoTen,
             p.ngaySinh             AS ngaySinh,
             p.gioiTinh             AS gioiTinh,
@@ -418,7 +418,7 @@
             INNER JOIN iceberg.facility f ON ac.maCskb = f.ma_cskb
         WHERE
             f.ma_cskb = #{maCSKCB}
-          AND p.soCccd = #{checkInId}
+          AND ac.id = #{checkInId}
     </select>
 
     <select id="findByDoKhamCustorm" resultType="com.example.clickhouse.dtos.datas.ExaminationDto">
@@ -444,7 +444,7 @@
             INNER JOIN iceberg.patient p ON ac.patient_id = p.uuid
         WHERE
             f.ma_cskb = #{maCSKCB}
-          AND p.soCccd = #{checkInId}
+          AND ac.id = #{checkInId}
     </select>
 
 

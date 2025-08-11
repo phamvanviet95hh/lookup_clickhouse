@@ -13,7 +13,7 @@ import java.util.UUID;
 @Builder
 public class InfoPatient {
 
-    private String id;
+    private String admissionCheckinUuid;
     private String hoTen;
     private String ngaySinh;
     private String gioiTinh;
